@@ -1,4 +1,5 @@
 import Image from "next/image";
+import '@/app/styles/globals.css';  // Ajuste conforme o caminho real do seu arquivo
 
 export default function Home() {
   return (
