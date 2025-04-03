@@ -5,7 +5,7 @@ import axios from 'axios';
 
 interface PersonRegistrationData {
   name: string;
-  formattedBirthdate: string;
+  birthdate: string;
   gender: string;
   maritalStatus: string;
   photo: string;

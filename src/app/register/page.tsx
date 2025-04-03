@@ -18,7 +18,7 @@ export default function RegisterPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [birthdate, setBirthdate] = useState<Date | undefined>(undefined);
+  const [birthday, setBirthdate] = useState<Date | undefined>(undefined);
   const [gender, setGender] = useState("");
   const [maritalStatus, setMaritalStatus] = useState("");
   const [photo, setPhoto] = useState("");
@@ -62,7 +62,7 @@ export default function RegisterPage() {
   const handleStepTwo = async () => {
     setError(""); // Resetando erro antes da validação
   
-    if (!name || !birthdate || !gender || !contact.email || !document.documentType || !document.number) {
+    if (!name || !birthday || !gender || !contact.email || !document.documentType || !document.number) {
       setError("Por favor, preencha todos os campos obrigatórios.");
       return;
     }
@@ -75,15 +75,15 @@ export default function RegisterPage() {
       return;
     }
 
-    const formattedBirthdate = birthdate
-      ? birthdate.toISOString().split("T")[0]
+    const birthdate = birthday
+      ? birthday.toISOString().split("T")[0]
       : "";
 
     try {
       await registerPerson(
         {
           name,
-          formattedBirthdate,
+          birthdate,
           gender,
           maritalStatus,
           photo,
@@ -146,7 +146,7 @@ export default function RegisterPage() {
                 onChange={(e) => setName(e.target.value)}
               />
               <DatePicker
-                value={birthdate}
+                value={birthday}
                 onChange={(date) => setBirthdate(date)}
               />
               <Select
