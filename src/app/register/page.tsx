@@ -43,15 +43,15 @@ export default function RegisterPage() {
       .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
   };
 
+  const handleCancelRegister = async () => {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    router.push("/login");
+    setIsLoading(false);
+  }
+
   const handleStepOne = async () => {
     setIsLoading(true);
-    const accessToken = localStorage.getItem("accessToken");
-
-    if (accessToken) {
-      setStep(2);
-      setIsLoading(false);
-      return;
-    }
 
     if (!username || !password) {
       setError("Por favor, preencha todos os campos obrigatórios.");
@@ -173,8 +173,14 @@ export default function RegisterPage() {
                 disabled={isLoading}
                 className="w-full py-3 px-4 rounded-lg text-white bg-gradient-to-r from-orange-500 to-red-600 hover:bg-gradient-to-l transition-colors duration-300"
               >
-                {isLoading && <Loader2 className="animate-spin w-4 h-4 mr-2" />}{" "}
-                Continuar
+                {isLoading ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Registrando usuário...
+                  </div>
+                ) : (
+                  "Continuar"
+                )}
               </Button>
               <div className="flex justify-center mt-6 text-sm w-full">
                 <a href="/login" className="text-orange-500 hover:underline">
@@ -226,10 +232,10 @@ export default function RegisterPage() {
                 Próximo
               </Button>
               <Button
-                onClick={prevStep}
+                onClick={handleCancelRegister}
                 className="w-full text-orange-500 hover:underline mt-4"
               >
-                Voltar
+                Cancelar
               </Button>
             </>
           )}
@@ -258,7 +264,7 @@ export default function RegisterPage() {
                 onChange={setChoralVoiceType}
                 placeholder="Tipo de voz (coral)"
               />
-               <div className="flex items-center justify-between border rounded-lg p-3 bg-white shadow-sm">
+              <div className="flex items-center justify-between border rounded-lg p-3 bg-white shadow-sm">
                 <span className="text-gray-400 font-medium">
                   Exerce liderança?
                 </span>
@@ -322,8 +328,14 @@ export default function RegisterPage() {
                 disabled={isLoading}
                 className="w-full py-3 px-4 rounded-lg text-white bg-gradient-to-r from-orange-500 to-red-600 hover:bg-gradient-to-l transition-colors duration-300"
               >
-                {isLoading && <Loader2 className="animate-spin w-4 h-4 mr-2" />}{" "}
-                Finalizar Cadastro
+                {isLoading ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Finalizando cadastro...
+                  </div>
+                ) : (
+                  "Finalizar Cadastro"
+                )}
               </Button>
               <Button
                 onClick={prevStep}
