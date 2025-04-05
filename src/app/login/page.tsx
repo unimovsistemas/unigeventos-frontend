@@ -29,26 +29,24 @@ export default function LoginPage() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-orange-400 via-red-500 to-black p-4">
-      <Card className="w-full max-w-sm shadow-lg rounded-2xl border border-gray-200 bg-white/80 backdrop-blur-lg">
+      <Card className="w-full max-w-md shadow-lg rounded-2xl border border-gray-200 bg-white/80 backdrop-blur-lg p-6">
         <CardHeader>
           <CardTitle className="text-center text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">
             Login
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col items-center justify-center">
+        <CardContent className="space-y-4">
           {error && <p className="text-red-600 text-sm text-center mb-3">{error}</p>}
           <Input 
             placeholder="Usuário" 
             value={username} 
             onChange={(e) => setUsername(e.target.value)} 
-            className="mb-4 rounded-lg px-4 py-2 text-black shadow-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500"
           />
           <Input 
             type="password" 
             placeholder="Senha" 
             value={password} 
             onChange={(e) => setPassword(e.target.value)} 
-            className="mb-6 rounded-lg px-4 py-2 text-black shadow-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500"
           />
           <Button 
             onClick={handleLogin} 

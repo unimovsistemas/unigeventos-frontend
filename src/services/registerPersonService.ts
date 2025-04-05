@@ -8,7 +8,6 @@ interface PersonRegistrationData {
   birthdate: string;
   gender: string;
   maritalStatus: string;
-  photo: string;
   church: string;
   clothingSize: string;
   choralVoiceType: string;

@@ -22,7 +22,7 @@ const Select: React.FC<SelectProps> = ({ options, value, defaultValue, onChange,
       value={value ?? defaultValue}
       onChange={(e) => onChange(e.target.value)}
       className={`border rounded-lg p-2 w-full focus:ring focus:ring-orange-400 
-        ${isPlaceholderSelected ? "text-gray-400" : "text-black"} ${className}`}
+        ${isPlaceholderSelected ? "text-gray-400" : "text-orange-600"} ${className}`}
     >
       {placeholder && (
         <option value="" disabled>
@@ -30,7 +30,7 @@ const Select: React.FC<SelectProps> = ({ options, value, defaultValue, onChange,
         </option>
       )}
       {options.map((option) => (
-        <option key={option.value} value={option.value} className="text-black">
+        <option key={option.value} value={option.value} className="text-orange-600">
           {option.label}
         </option>
       ))}
