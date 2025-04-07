@@ -33,3 +33,26 @@ export const refreshToken = async (refreshToken: string) => {
   const response = await axios.post(`${API_URL}/refresh-token`, { refreshToken });
   return response.data;
 };
+
+// Nova função: solicitar recuperação de senha
+export const forgotPassword = async (email: string) => {
+  try {
+    const response = await axios.post(`${API_URL}/forgot-password`, { email });
+    return response;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Erro ao solicitar recuperação de senha');
+  }
+};
+
+// Nova função: redefinir a senha com token
+export const resetPassword = async (token: string, newPassword: string) => {
+  try {
+    const response = await axios.post(`${API_URL}/reset-password`, {
+      token,
+      newPassword,
+    });
+    return response;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Erro ao redefinir senha');
+  }
+};
