@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Input } from "@components/ui/input";
 import { Button } from "@components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@components/ui/card";
-import { login } from "../../services/authService"; // Importando o serviço de autenticação
+import { login } from "../../../services/authService"; // Importando o serviço de autenticação
 import { Loader2 } from "lucide-react";
 
 export default function LoginPage() {
