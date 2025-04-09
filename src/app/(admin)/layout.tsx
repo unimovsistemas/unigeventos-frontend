@@ -9,7 +9,7 @@ import {
   TicketPercent,
   Church,
   CalendarClock,
-  ShieldCheck
+  ShieldCheck,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import {
@@ -21,6 +21,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import WeatherWidget from "@/components/ui/weather-widget";
+import { Toaster } from "sonner";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
@@ -34,7 +35,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           <NavItem href="/admin/dashboard" icon={<Home size={18} />}>
             Dashboard
           </NavItem>
-          <NavItem href="/admin/organizers" icon={<Church size={18} />}>
+          <NavItem href="/organizers" icon={<Church size={18} />}>
             Organizadores
           </NavItem>
           <NavItem href="/admin/events" icon={<Calendar size={18} />}>
@@ -64,13 +65,14 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       {/* Main area */}
       <div className="flex-1 flex flex-col">
         <header className="bg-[#2b2b2b] px-6 py-4 flex items-center justify-between border-b border-[#333]">
-        <WeatherWidget />
+          <WeatherWidget />
 
           {/* User Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="rounded-full hover:opacity-90 transition">
-                <Avatar className="h-9 w-9 border border-neutral-600"
+                <Avatar
+                  className="h-9 w-9 border border-neutral-600"
                   src="{user?.imageUrl}"
                   alt="{user?.name}"
                 />
