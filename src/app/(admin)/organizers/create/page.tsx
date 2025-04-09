@@ -4,12 +4,14 @@
 import { OrganizerForm } from "@/components/organizers/OrganizerForm";
 import { OrganizerFormData } from "@/schemas/organizerSchema";
 import { createOrganizer } from "@/services/organizersService";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 export default function CreateOrganizerPage() {
   const router = useRouter();
-  const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : "";
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("accessToken") : "";
 
   const handleSubmit = async (data: OrganizerFormData) => {
     try {

@@ -11,6 +11,7 @@ import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import Cleave from "cleave.js/react";
 import "cleave.js/dist/addons/cleave-phone.br";
+import Link from "next/link";
 
 interface OrganizerFormProps {
   onSubmit: (data: OrganizerFormData) => void;
@@ -103,6 +104,11 @@ export function OrganizerForm({
           "Salvar"
         )}
       </Button>
+      <div className="flex justify-center mt-6 text-lg w-full">
+        <Link href="/organizers" className="text-orange-500 hover:underline">
+          Cancelar
+        </Link>
+      </div>
     </form>
   );
 }

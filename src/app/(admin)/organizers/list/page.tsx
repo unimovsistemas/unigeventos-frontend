@@ -53,7 +53,6 @@ export default function OrganizerListPage() {
         toast.success("Organizadores carregados com sucesso!");
       } catch (error: any) {
         toast.error(error.message || "Erro ao buscar organizadores.");
-        console.error(error.message);
       } finally {
         setLoading(false);
       }
