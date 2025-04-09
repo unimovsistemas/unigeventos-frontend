@@ -65,91 +65,89 @@ export default function PasswordRecovery() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-orange-400 via-red-500 to-black p-4">
-      <Card className="w-full max-w-md shadow-lg rounded-2xl border border-gray-200 bg-white/80 backdrop-blur-lg p-6">
-        <CardHeader>
-          <CardTitle className="text-center text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">
-            {step === 1 ? "Recuperar Senha" : "Nova Senha"}
-          </CardTitle>
-        </CardHeader>
+    <Card className="w-full max-w-md shadow-lg rounded-2xl border border-gray-200 bg-white/80 backdrop-blur-lg p-6">
+      <CardHeader>
+        <CardTitle className="text-center text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">
+          {step === 1 ? "Recuperar Senha" : "Nova Senha"}
+        </CardTitle>
+      </CardHeader>
 
-        <CardContent className="space-y-4">
-          {error && (
-            <p className="text-red-600 text-sm text-center mb-3">{error}</p>
-          )}
+      <CardContent className="space-y-4">
+        {error && (
+          <p className="text-red-600 text-sm text-center mb-3">{error}</p>
+        )}
 
-          {step === 1 ? (
-            <>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Digite seu e-mail"
-              />
-              <Button
-                className="w-full py-3 px-4 rounded-lg text-white bg-gradient-to-r from-orange-500 to-red-600 hover:bg-gradient-to-l transition-colors duration-300"
-                onClick={handleSendEmail}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Enviando...
-                  </div>
-                ) : (
-                  "Enviar link de redefinição"
-                )}
-              </Button>
-            </>
-          ) : (
-            <>
-              <Input
-                id="token"
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                placeholder="Digite o token recebido por e-mail"
-              />
+        {step === 1 ? (
+          <>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Digite seu e-mail"
+            />
+            <Button
+              className="w-full py-3 px-4 rounded-lg text-white bg-gradient-to-r from-orange-500 to-red-600 hover:bg-gradient-to-l transition-colors duration-300"
+              onClick={handleSendEmail}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Enviando...
+                </div>
+              ) : (
+                "Enviar link de redefinição"
+              )}
+            </Button>
+          </>
+        ) : (
+          <>
+            <Input
+              id="token"
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              placeholder="Digite o token recebido por e-mail"
+            />
 
-              <Input
-                id="newPassword"
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Digite sua nova senha"
-              />
+            <Input
+              id="newPassword"
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Digite sua nova senha"
+            />
 
-              <Input
-                id="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirme sua nova senha"
-              />
+            <Input
+              id="confirmPassword"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirme sua nova senha"
+            />
 
-              <Button
-                className="w-full py-3 px-4 rounded-lg text-white bg-gradient-to-r from-orange-500 to-red-600 hover:bg-gradient-to-l transition-colors duration-300"
-                onClick={handleResetPassword}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Enviando...
-                  </div>
-                ) : (
-                  "Alterar senha"
-                )}
-              </Button>
-            </>
-          )}
-          <div className="flex justify-center mt-6 text-sm w-full">
-            <a href="/login" className="text-orange-500 hover:underline">
-              Cancelar
-            </a>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+            <Button
+              className="w-full py-3 px-4 rounded-lg text-white bg-gradient-to-r from-orange-500 to-red-600 hover:bg-gradient-to-l transition-colors duration-300"
+              onClick={handleResetPassword}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Enviando...
+                </div>
+              ) : (
+                "Alterar senha"
+              )}
+            </Button>
+          </>
+        )}
+        <div className="flex justify-center mt-6 text-sm w-full">
+          <a href="/login" className="text-orange-500 hover:underline">
+            Cancelar
+          </a>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
