@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const organizerSchema = z.object({
+  id: z.string(),
   name: z.string().min(1, "Nome é obrigatório"),
   contact: z.object({
     email: z.string().email("Email inválido"),

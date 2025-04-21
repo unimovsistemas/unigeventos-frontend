@@ -32,31 +32,31 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           Painel Admin
         </h2>
         <nav className="space-y-4">
-          <NavItem href="/admin/dashboard" icon={<Home size={18} />}>
+          <NavItem href="/dashboard" icon={<Home size={18} />}>
             Dashboard
           </NavItem>
           <NavItem href="/organizers" icon={<Church size={18} />}>
             Organizadores
           </NavItem>
-          <NavItem href="/admin/events" icon={<Calendar size={18} />}>
+          <NavItem href="/events" icon={<Calendar size={18} />}>
             Eventos
           </NavItem>
-          <NavItem href="/admin/payments" icon={<CreditCard size={18} />}>
+          <NavItem href="/payments" icon={<CreditCard size={18} />}>
             Pagamentos
           </NavItem>
-          <NavItem href="/admin/coupons" icon={<TicketPercent size={18} />}>
+          <NavItem href="/coupons" icon={<TicketPercent size={18} />}>
             Cupons
           </NavItem>
-          <NavItem href="/admin/schedulings" icon={<CalendarClock size={18} />}>
+          <NavItem href="/schedulings" icon={<CalendarClock size={18} />}>
             Agendamentos
           </NavItem>
-          <NavItem href="/admin/users" icon={<Users size={18} />}>
+          <NavItem href="/users" icon={<Users size={18} />}>
             Usuários
           </NavItem>
-          <NavItem href="/admin/roles" icon={<ShieldCheck size={18} />}>
+          <NavItem href="/roles" icon={<ShieldCheck size={18} />}>
             Papéis
           </NavItem>
-          <NavItem href="/admin/configurations" icon={<Settings size={18} />}>
+          <NavItem href="/configurations" icon={<Settings size={18} />}>
             Configurações
           </NavItem>
         </nav>

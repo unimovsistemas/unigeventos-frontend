@@ -12,6 +12,11 @@ interface OrganizerData {
   additionalDetails: string;
 }
 
+export interface OrganizerResponse {
+  id: string;
+  name: string;
+}
+
 const API_URL = "http://localhost:8001/rest/v1/organizers";
 
 interface PageResponse<T> {
@@ -31,6 +36,22 @@ export const getAllPage = async (
 ): Promise<PageResponse<OrganizerData>> => {
   try {
     const response = await axios.get(`${API_URL}/entities/page?page=${page}&size=${size}`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Erro ao obter os organizadores cadastrados!');
+  }
+};
+
+export const getAll = async (
+  accessToken: string
+): Promise<OrganizerResponse[]> => {
+  try {
+    const response = await axios.get(`${API_URL}/entities`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
