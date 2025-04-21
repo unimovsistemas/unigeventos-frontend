@@ -11,11 +11,13 @@ import {
   ArrowLeftCircle,
   Plus,
   SearchX,
+  Megaphone,
+  Loader2,
 } from "lucide-react";
-import { EventDataResponse, getAllPage } from "@/services/eventsService";
+import { EventDataResponse, getAllPage, publishEvent } from "@/services/eventsService";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import { toast } from "sonner";
+import { toast } from "react-toastify";
 
 interface PageResponse<T> {
   content: T[];
@@ -48,6 +50,7 @@ export default function EventsListPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     async function fetchEvents() {
@@ -74,6 +77,42 @@ export default function EventsListPage() {
 
     fetchEvents();
   }, [currentPage]);
+
+  const publishEventById = async (id: string) => {
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("accessToken") : "";
+
+    setSubmitting(true);
+    setLoading(true)
+    try {
+      if (!token) return;
+
+      await publishEvent(token, id as string);
+
+      setEvents((prevEvents) =>
+        prevEvents.map((event) =>
+          event.id === id ? { ...event, isPublished: true } : event
+        )
+      );
+
+      toast.success("Evento publicado com sucesso!");
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || "Erro inesperado. Entre em contato com o administrador do sistema!"
+      toast.error(`Erro ao publicar o evento. Causa: ${errorMessage}`);
+    } finally {
+      setSubmitting(false);
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-96">
+        <Loader2 className="h-6 w-6 animate-spin" />
+        <span className="ml-2">Carregando eventos...</span>
+      </div>
+    );
+  }
 
   const handlePrevPage = () => {
     if (currentPage > 0) setCurrentPage((prev) => prev - 1);
@@ -120,10 +159,10 @@ export default function EventsListPage() {
               <h2 className="flex gap-2 items-center justify-between text-xl font-semibold text-orange-300">
                 {event.name}
                 {event.isFree && (
-                <span className="top-2 right-2 bg-green-600 text-white text-xs font-semibold px-2 py-1 rounded-full shadow">
-                  Gratuito
-                </span>
-              )}
+                  <span className="top-2 right-2 bg-green-600 text-white text-xs font-semibold px-2 py-1 rounded-full shadow">
+                    Gratuito
+                  </span>
+                )}
               </h2>
               <p className="text-sm mt-2 text-neutral-300">
                 {new Date(event.startDatetime).toLocaleDateString()} até{" "}
@@ -148,14 +187,26 @@ export default function EventsListPage() {
                 {event.isPublished ? "Publicado" : "Rascunho"}
               </p>
 
-              <Link href={`/events/${event.id}`}>
-                <Button
-                  variant="outline"
-                  className="mt-4 text-orange-400 hover:text-orange-500 border-orange-600"
-                >
-                  <Pencil size={16} className="mr-1" /> Editar
-                </Button>
-              </Link>
+              <div className="flex items-center justify-between">
+                <Link href={`/events/${event.id}`}>
+                  <Button
+                    variant="outline"
+                    className="mt-4 text-orange-400 hover:text-orange-500 border-orange-600"
+                  >
+                    <Pencil size={16} className="mr-1" /> Editar
+                  </Button>
+                </Link>
+                {!event.isPublished && (
+                  <Button
+                    onClick={() => publishEventById(event.id)}
+                    disabled={loading}
+                    variant="outline"
+                    className="mt-4 text-orange-400 hover:text-orange-500 border-orange-600"
+                  >
+                    <Megaphone size={16} className="mr-1" /> Publicar
+                  </Button>
+                )}
+              </div>
             </Card>
           ))
         ) : (
@@ -177,7 +228,7 @@ export default function EventsListPage() {
               currentPage === 0
                 ? "text-gray-400 cursor-not-allowed"
                 : "text-orange-400 hover:text-orange-500 cursor-pointer"
-            }`}   
+            }`}
           >
             Anterior <ArrowLeftCircle className="ml-2" size={16} />
           </Button>
@@ -194,7 +245,8 @@ export default function EventsListPage() {
               currentPage >= totalPages - 1
                 ? "text-gray-400 cursor-not-allowed"
                 : "text-orange-400 hover:text-orange-500 cursor-pointer"
-            }`}          >
+            }`}
+          >
             Próxima <ArrowRightCircle className="ml-2" size={16} />
           </Button>
         </div>

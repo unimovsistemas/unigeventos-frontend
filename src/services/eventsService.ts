@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import axios from "axios";
-import Error from "next/error";
 
 export interface Batch {
   name: string;
@@ -145,5 +144,23 @@ export const updateEvent = async (
     throw new Error(
       error.response?.data?.message || "Erro ao atualizar evento."
     );
+  }
+};
+
+export const publishEvent = async (
+  accessToken: string,
+  eventId: string
+): Promise<void> => {
+  try {
+    await axios.put(`${API_URL}/actions/publish-event/${eventId}`, null, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+  } catch (error: any) {
+    if (error?.status === 401) {
+      error.response.data.message = "Usuário não autorizado para realizar esta operação!";
+    }
+    throw error;
   }
 };
