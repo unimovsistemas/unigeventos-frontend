@@ -71,12 +71,14 @@ interface PageResponse<T> {
 
 export const getAllPage = async (
   accessToken: string,
+  searchTerm = "",
+  onlyPublished = false,
   page: number = 0,
-  size: number = 3
+  size: number = 3,
 ): Promise<PageResponse<EventDataResponse>> => {
   try {
     const response = await axios.get(
-      `${API_URL}/entities/page?page=${page}&size=${size}`,
+      `${API_URL}/entities/page-filter?page=${page}&size=${size}&search=${encodeURIComponent(searchTerm)}&onlyPublished=${onlyPublished}`,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,

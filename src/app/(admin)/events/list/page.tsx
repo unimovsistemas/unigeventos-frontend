@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -22,6 +22,7 @@ import {
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import { toast } from "react-toastify";
+import debounce from "lodash/debounce";
 
 interface PageResponse<T> {
   content: T[];
@@ -54,7 +55,24 @@ export default function EventsListPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
+  const [, setSubmitting] = useState(false);
+  const [publishingId, setPublishingId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debounceSearch, setDebouncedSearch] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [dataLoaded, setDataLoaded] = useState(false);
+  const [onlyPublished, setOnlyPublished] = useState(false);
+
+  const debouncedSetSearch = useCallback(
+    debounce((value: string) => {
+      setDebouncedSearch(value);
+    }, 500),
+    []
+  );
+
+  useEffect(() => {
+    debouncedSetSearch(searchTerm);
+  }, [searchTerm, debouncedSetSearch]);
 
   useEffect(() => {
     async function fetchEvents() {
@@ -68,10 +86,16 @@ export default function EventsListPage() {
 
         const response: PageResponse<EventDataResponse> = await getAllPage(
           token,
+          debounceSearch,
+          onlyPublished,
           currentPage
         );
+
         setEvents(response.content || []);
         setTotalPages(response.totalPages);
+
+        // Mantém o foco no campo de busca
+        setDataLoaded(true);
       } catch (error: any) {
         toast.error(error.message || "Erro ao buscar eventos.");
       } finally {
@@ -80,14 +104,14 @@ export default function EventsListPage() {
     }
 
     fetchEvents();
-  }, [currentPage]);
+  }, [currentPage, debounceSearch, onlyPublished]);
 
   const publishEventById = async (id: string) => {
     const token =
       typeof window !== "undefined" ? localStorage.getItem("accessToken") : "";
 
-    setSubmitting(true);
-    setLoading(true);
+    setPublishingId(id);
+
     try {
       if (!token) return;
 
@@ -100,16 +124,25 @@ export default function EventsListPage() {
       );
 
       toast.success("Evento publicado com sucesso!");
+
+      // Mantém o foco no campo de busca
+      setDataLoaded(true);
     } catch (error: any) {
       const errorMessage =
         error.response?.data?.message ||
         "Erro inesperado. Entre em contato com o administrador do sistema!";
       toast.error(`Erro ao publicar o evento. Causa: ${errorMessage}`);
     } finally {
-      setSubmitting(false);
-      setLoading(false);
+      setPublishingId(null);
     }
   };
+
+  useEffect(() => {
+    if (dataLoaded && inputRef.current) {
+      inputRef.current.focus();
+      setDataLoaded(false); // impede foco repetido
+    }
+  }, [dataLoaded]);
 
   if (loading) {
     return (
@@ -151,6 +184,26 @@ export default function EventsListPage() {
             Novo Evento <Plus className="ml-2" size={16} />
           </Button>
         </Link>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <input
+          type="text"
+          ref={inputRef}
+          placeholder="Buscar pelo nome"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="border border-gray-300 text-orange-600 rounded-lg px-3 py-2 w-80"
+        />
+
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={onlyPublished}
+            onChange={() => setOnlyPublished((prev) => !prev)}
+          />
+          Mostrar apenas eventos publicados
+        </label>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
