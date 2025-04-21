@@ -189,9 +189,7 @@ export function EventForm({
                         (option) => option.value === field?.value
                       )?.value || ""
                     }
-                    onChange={(value) => 
-                      field.onChange(value)
-                    }
+                    onChange={(value) => field.onChange(value)}
                   />
                 )}
               />
@@ -309,7 +307,7 @@ export function EventForm({
             </div>
 
             {!methods.watch("isFree") && (
-              <div>
+              <div className="max-h-[400px] overflow-y-auto space-y-4 border rounded-md p-4">
                 <BatchList />
                 {errors.batches && (
                   <p className="text-orange-500 text-sm">

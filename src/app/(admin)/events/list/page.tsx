@@ -55,8 +55,7 @@ export default function EventsListPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [, setSubmitting] = useState(false);
-  const [publishingId, setPublishingId] = useState<string | null>(null);
+  const [, setPublishingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [debounceSearch, setDebouncedSearch] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -143,15 +142,6 @@ export default function EventsListPage() {
       setDataLoaded(false); // impede foco repetido
     }
   }, [dataLoaded]);
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-96">
-        <Loader2 className="h-6 w-6 animate-spin" />
-        <span className="ml-2">Carregando eventos...</span>
-      </div>
-    );
-  }
 
   const handlePrevPage = () => {
     if (currentPage > 0) setCurrentPage((prev) => prev - 1);
