@@ -173,7 +173,11 @@ export default function EventsListPage() {
           <Button
             onClick={handlePrevPage}
             disabled={currentPage === 0}
-            className="mt-4 text-orange-400 hover:text-orange-500 cursor-pointer"
+            className={`mt-4 ${
+              currentPage === 0
+                ? "text-gray-400 cursor-not-allowed"
+                : "text-orange-400 hover:text-orange-500 cursor-pointer"
+            }`}   
           >
             Anterior <ArrowLeftCircle className="ml-2" size={16} />
           </Button>
@@ -186,8 +190,11 @@ export default function EventsListPage() {
           <Button
             onClick={handleNextPage}
             disabled={currentPage >= totalPages - 1}
-            className="mt-4 text-orange-400 hover:text-orange-500 cursor-pointer"
-          >
+            className={`mt-4 ${
+              currentPage >= totalPages - 1
+                ? "text-gray-400 cursor-not-allowed"
+                : "text-orange-400 hover:text-orange-500 cursor-pointer"
+            }`}          >
             Próxima <ArrowRightCircle className="ml-2" size={16} />
           </Button>
         </div>
