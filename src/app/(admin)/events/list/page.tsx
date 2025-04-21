@@ -14,7 +14,11 @@ import {
   Megaphone,
   Loader2,
 } from "lucide-react";
-import { EventDataResponse, getAllPage, publishEvent } from "@/services/eventsService";
+import {
+  EventDataResponse,
+  getAllPage,
+  publishEvent,
+} from "@/services/eventsService";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import { toast } from "react-toastify";
@@ -83,7 +87,7 @@ export default function EventsListPage() {
       typeof window !== "undefined" ? localStorage.getItem("accessToken") : "";
 
     setSubmitting(true);
-    setLoading(true)
+    setLoading(true);
     try {
       if (!token) return;
 
@@ -97,7 +101,9 @@ export default function EventsListPage() {
 
       toast.success("Evento publicado com sucesso!");
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || "Erro inesperado. Entre em contato com o administrador do sistema!"
+      const errorMessage =
+        error.response?.data?.message ||
+        "Erro inesperado. Entre em contato com o administrador do sistema!";
       toast.error(`Erro ao publicar o evento. Causa: ${errorMessage}`);
     } finally {
       setSubmitting(false);
@@ -126,7 +132,7 @@ export default function EventsListPage() {
     return Array.from({ length: 3 }).map((_, index) => (
       <Card
         key={index}
-        className="p-4 bg-neutral-900 border border-neutral-700"
+        className="p-4 bg-gradient-to-br from-[#333333] via-[#2b2b2b] to-[#1e1e1e] border border-neutral-700"
       >
         <Skeleton height={24} width="60%" />
         <Skeleton count={2} className="mt-2" />
@@ -147,14 +153,14 @@ export default function EventsListPage() {
         </Link>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {loading ? (
           renderSkeleton()
         ) : events.length > 0 ? (
           events.map((event) => (
             <Card
               key={event.id}
-              className="p-4 bg-neutral-900 text-white border border-neutral-700 shadow-md"
+              className="p-4 bg-gradient-to-br from-[#222222] via-[#2b2b2b] to-[#1e1e1e] text-white border border-neutral-700 shadow-md"
             >
               <h2 className="flex gap-2 items-center justify-between text-xl font-semibold text-orange-300">
                 {event.name}
@@ -220,7 +226,7 @@ export default function EventsListPage() {
       </div>
 
       {!loading && (
-        <div className="flex justify-between items-center mt-8">
+        <div className="flex flex-col sm:flex-row sm:justify-between items-center gap-4 mt-8">
           <Button
             onClick={handlePrevPage}
             disabled={currentPage === 0}

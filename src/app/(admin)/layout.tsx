@@ -21,7 +21,6 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import WeatherWidget from "@/components/ui/weather-widget";
-import { Toaster } from "sonner";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
@@ -95,8 +94,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </DropdownMenu>
         </header>
 
-        <main className="flex-1 p-6 bg-gradient-to-br from-black via-[#1e1e1e] to-[#2b2b2b]">
-          {children}
+        <main className="flex-1 p-6 bg-gradient-to-br bg-[#2b2b2b] overflow-y-auto h-screen">
+          <div className="max-w-7xl mx-auto w-full px-4 sm:px-6">
+            {children}
+          </div>
         </main>
       </div>
     </div>
