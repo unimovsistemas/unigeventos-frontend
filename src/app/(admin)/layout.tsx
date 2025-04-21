@@ -1,4 +1,6 @@
-import { ReactNode } from "react";
+"use client";
+
+import { ReactNode, useState } from "react";
 import Link from "next/link";
 import {
   Home,
@@ -10,6 +12,7 @@ import {
   Church,
   CalendarClock,
   ShieldCheck,
+  Menu,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import {
@@ -23,10 +26,16 @@ import {
 import WeatherWidget from "@/components/ui/weather-widget";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
+  const [isSidebarOpen, setSidebarOpen] = useState(false); // Controle do estado do menu lateral
+
   return (
     <div className="min-h-screen flex bg-[#1e1e1e] text-neutral-200">
       {/* Sidebar */}
-      <aside className="w-64 bg-[#2b2b2b] border-r border-[#333] shadow-sm p-6 hidden md:block">
+      <aside
+        className={`w-64 bg-[#2b2b2b] border-r border-[#333] shadow-sm p-6 hidden md:block ${
+          isSidebarOpen ? "block" : "hidden md:block"
+        }`}
+      >
         <h2 className="text-2xl font-bold text-orange-500 mb-8">
           Painel Admin
         </h2>
@@ -61,7 +70,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         </nav>
       </aside>
 
-      {/* Main area */}
+      {/* Main content */}
       <div className="flex-1 flex flex-col">
         <header className="bg-[#2b2b2b] px-6 py-4 flex items-center justify-between border-b border-[#333]">
           <WeatherWidget />
@@ -92,8 +101,99 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          {/* Hamburger Menu for Mobile */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="md:hidden text-white"
+                onClick={() => setSidebarOpen(!isSidebarOpen)}
+              >
+                <Menu className="ml-2" size={16} /> {/* Ícone de hambúrguer */}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-48 bg-[#2b2b2b] text-neutral-200 border border-[#444]">
+              <DropdownMenuLabel className="font-bold text-orange-500 mb-8">
+                Painel Admin
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-[#444]" />
+              <DropdownMenuItem asChild>
+                <Link
+                  className="flex items-center justify-start gap-2"
+                  href="/dashboard"
+                >
+                  {<Home size={14} />} Dashboard
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link
+                  className="flex items-center justify-start gap-2"
+                  href="/organizers"
+                >
+                  {<Church size={14} />} Organizadores
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link
+                  className="flex items-center justify-start gap-2"
+                  href="/events"
+                >
+                  {<Calendar size={14} />} Eventos
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link
+                  className="flex items-center justify-start gap-2"
+                  href="/payments"
+                >
+                  {<CreditCard size={14} />} Pagamentos
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link
+                  className="flex items-center justify-start gap-2"
+                  href="/coupons"
+                >
+                  {<TicketPercent size={14} />} Cupons
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link
+                  className="flex items-center justify-start gap-2"
+                  href="/schedulings"
+                >
+                  {<CalendarClock size={14} />} Agendamentos
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link
+                  className="flex items-center justify-start gap-2"
+                  href="/users"
+                >
+                  {<Users size={14} />} Usuários
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link
+                  className="flex items-center justify-start gap-2"
+                  href="/roles"
+                >
+                  {<ShieldCheck size={14} />} Papéis
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link
+                  className="flex items-center justify-start gap-2"
+                  href="/configurations"
+                >
+                  {<Settings size={14} />} Configurações
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </header>
 
+        {/* Main Area */}
         <main className="flex-1 p-6 bg-gradient-to-br bg-[#2b2b2b] overflow-y-auto h-screen">
           <div className="max-w-7xl mx-auto w-full px-4 sm:px-6">
             {children}
