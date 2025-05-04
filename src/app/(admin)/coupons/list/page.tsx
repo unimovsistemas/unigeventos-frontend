@@ -44,7 +44,10 @@ export default function CouponListPage() {
           return;
         }
 
-        const response: PageResponse<Coupon> = await getAllPage(token, currentPage);
+        const response: PageResponse<Coupon> = await getAllPage(
+          token,
+          currentPage
+        );
         setCoupons(response.content || []);
         setTotalPages(response.totalPages);
       } catch (error: any) {
@@ -82,7 +85,9 @@ export default function CouponListPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-orange-400">Cupons de Desconto</h1>
+        <h1 className="text-3xl font-bold text-orange-400">
+          Cupons de Desconto
+        </h1>
         <Link href="/coupons/create">
           <Button className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 rounded-md shadow flex items-center">
             Novo Cupom <Plus className="ml-2" size={16} />
@@ -98,20 +103,29 @@ export default function CouponListPage() {
                 key={coupon.id}
                 className="p-4 bg-gradient-to-br from-[#222222] via-[#2b2b2b] to-[#1e1e1e] text-white border border-neutral-700 shadow-md"
               >
-                <h2 className="text-xl font-semibold text-orange-300">
+                <h2 className="flex gap-2 items-center justify-between text-xl font-semibold text-orange-300">
                   {coupon.code}
+                  {new Date(coupon.expirationDate) < new Date() ? (
+                    <span className="top-2 right-2 bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded-full shadow">
+                      Expirado
+                    </span>
+                  ) : (
+                    <span className="top-2 right-2 bg-green-600 text-white text-xs font-semibold px-2 py-1 rounded-full shadow">
+                      Ativo
+                    </span>
+                  )}
                 </h2>
                 <p className="text-sm text-neutral-300 mt-2">
                   Desconto: <strong>{coupon.discountPercentage}%</strong>
                 </p>
                 <p className="text-sm text-neutral-400">
                   Expira em:{" "}
-                  <strong>{new Date(coupon.expirationDate).toLocaleDateString()}</strong>
+                  <strong>
+                    {new Date(coupon.expirationDate).toLocaleDateString()}
+                  </strong>
                 </p>
                 <Link href={`/coupons/${coupon.id}/edit`}>
-                  <Button
-                    className="mt-4 text-orange-400 hover:text-orange-500 border-orange-600"
-                  >
+                  <Button className="mt-4 text-orange-400 hover:text-orange-500 border-orange-600">
                     <Pencil size={16} className="mr-1" />
                     Editar
                   </Button>
@@ -136,7 +150,8 @@ export default function CouponListPage() {
           </Button>
 
           <span className="text-white text-sm">
-            Página <strong>{currentPage + 1}</strong> de <strong>{totalPages}</strong>
+            Página <strong>{currentPage + 1}</strong> de{" "}
+            <strong>{totalPages}</strong>
           </span>
 
           <Button
