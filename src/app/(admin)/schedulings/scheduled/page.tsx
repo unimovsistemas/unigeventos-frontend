@@ -5,17 +5,18 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { toast } from "react-toastify";
+import { getUserNotifications, subscribeToNotification, unsubscribeFromNotification } from "@/services/schedulingService";
 
 const NOTIFICATIONS = [
   {
     type: "BIRTHDAY_REMINDER",
     name: "Lembrete de Aniversários",
-    description: "Receba lembretes dos aniversariantes do mês por e-mail.",
+    description: "Receba lembretes do(s) aniversariante(s) do dia por e-mail.",
   },
   {
     type: "EVENT_STATISTICS",
     name: "Estatísticas de Eventos",
-    description: "Receba um resumo mensal dos eventos realizados.",
+    description: "Receba um resumo do(s) evento(s) realizado(s) no dia seguinte após a conclusão.",
   },
 ];
 
@@ -41,26 +42,18 @@ export default function ScheduledPage() {
 
   useEffect(() => {
     if (!accessToken) return;
-
+  
     async function fetchData() {
       try {
-        const response = await fetch(
-          `http://localhost:8001/rest/v1/schedulings/queries/get-user-notifications`,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
-        const data = await response.json();
+        const data = await getUserNotifications(accessToken!);
         setSubscriptions(data);
       } catch (err: any) {
-        toast.error(`Erro ao buscar os agendamentos. Causa ${err.message}`);
+        toast.error(`Erro ao buscar os agendamentos. Causa: ${err.message}`);
       } finally {
         setLoading(false);
       }
     }
-
+  
     fetchData();
   }, [accessToken]);
 
@@ -70,13 +63,7 @@ export default function ScheduledPage() {
   const handleSubscribe = async (type: string) => {
     setUpdating(type);
     try {
-      await fetch(`http://localhost:8001/rest/v1/schedulings/actions/subscribe-user-to-notification?notificationType=${type}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      await subscribeToNotification(accessToken!, type);
       toast.success("Inscrição realizada com sucesso.");
       setSubscriptions((prev) =>
         prev.map((s) =>
@@ -89,17 +76,12 @@ export default function ScheduledPage() {
       setUpdating(null);
     }
   };
+  
 
   const handleUnsubscribe = async (type: string) => {
     setUpdating(type);
     try {
-      await fetch(`http://localhost:8001/rest/v1/schedulings/actions/unsubscribe-user-from-notification?notificationType=${type}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      await unsubscribeFromNotification(accessToken!, type);
       toast.success("Inscrição removida.");
       setSubscriptions((prev) =>
         prev.map((s) =>
@@ -112,6 +94,7 @@ export default function ScheduledPage() {
       setUpdating(null);
     }
   };
+  
 
   if (loading || !accessToken) {
     return (
@@ -133,31 +116,34 @@ export default function ScheduledPage() {
         return (
           <div
             key={notif.type}
-            className="bg-white rounded-xl shadow p-6 border border-gray-200"
+            className="p-4 bg-gradient-to-br from-[#222222] via-[#2b2b2b] to-[#1e1e1e] text-white border border-neutral-700 shadow-md"
           >
-            <h2 className="text-xl font-semibold text-gray-800 mb-1">
+            <h2 className="flex gap-2 items-center justify-between text-xl font-semibold text-orange-300">
               {notif.name}
             </h2>
-            <p className="text-gray-600 mb-4">{notif.description}</p>
+            <p className="text-sm text-neutral-300 mb-4 mt-2">{notif.description}</p>
 
             <Button
-              onClick={() =>
-                subscribed
-                  ? handleUnsubscribe(notif.type)
-                  : handleSubscribe(notif.type)
-              }
-              variant={subscribed ? "destructive" : "default"}
-              disabled={updating === notif.type}
-              className="w-full sm:w-auto"
-            >
-              {updating === notif.type ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : subscribed ? (
-                "Remover inscrição"
-              ) : (
-                "Inscrever-se"
-              )}
-            </Button>
+          onClick={() =>
+            subscribed
+              ? handleUnsubscribe(notif.type)
+              : handleSubscribe(notif.type)
+          }
+          disabled={updating === notif.type}
+          className={`w-full sm:w-auto font-semibold px-4 py-2 rounded-md transition-colors duration-300 shadow-md ${
+            subscribed
+              ? "bg-[#f5f5f4] text-[#1c1917] hover:bg-[#e7e5e4]"
+              : "bg-gradient-to-r from-[#ea580c] to-[#dc2626] text-white hover:from-[#c2410c] hover:to-[#b91c1c]"
+          }`}
+        >
+          {updating === notif.type ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : subscribed ? (
+            "Desativar"
+          ) : (
+            "Inscrever-se"
+          )}
+        </Button>
           </div>
         );
       })}
