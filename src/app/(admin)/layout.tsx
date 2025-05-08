@@ -58,7 +58,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           <NavItem href="/schedulings" icon={<CalendarClock size={18} />}>
             Agendamentos
           </NavItem>
-          <NavItem href="/users" icon={<Users size={18} />}>
+          <NavItem href="/persons" icon={<Users size={18} />}>
             Usuários
           </NavItem>
           <NavItem href="/roles" icon={<ShieldCheck size={18} />}>
