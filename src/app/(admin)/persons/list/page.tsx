@@ -77,7 +77,7 @@ export default function PersonListPage() {
             <AccordionContent className="bg-neutral-900 px-6 py-4 text-white rounded-b-md border border-t-0 border-neutral-700">
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                 <li>
-                  <strong>Data de nascimento:</strong> {new Date(person.birthdate).toLocaleDateString()}
+                  <strong>Data de nascimento:</strong> {new Date(person.birthdate + "T00:00:00").toLocaleDateString()}
                 </li>
                 <li>
                   <strong>Estado civil:</strong> {maritalStatusTypeLabels[person.maritalStatus] || person.maritalStatus}
