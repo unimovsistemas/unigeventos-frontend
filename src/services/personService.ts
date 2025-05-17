@@ -52,6 +52,7 @@ export interface PersonResponse {
     documentType: string;
   };
   login: {
+    id: string;
     username: string;
     lastLogin: Date;
     roles: Role[];

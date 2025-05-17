@@ -2,7 +2,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { choralVoiceTypeLabels, genderTypeLabels, getPersonsPage, maritalStatusTypeLabels, PersonResponse, roleTypeLabels } from "@/services/personService";
+import {
+  choralVoiceTypeLabels,
+  genderTypeLabels,
+  getPersonsPage,
+  maritalStatusTypeLabels,
+  PersonResponse,
+  Role,
+  roleTypeLabels,
+} from "@/services/personService";
 import {
   Accordion,
   AccordionItem,
@@ -13,33 +21,68 @@ import { Button } from "@/components/ui/button";
 import { toast } from "react-toastify";
 import { ArrowLeftCircle, ArrowRightCircle } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
+import AddRolesModal from "@/components/roles/AddRolesModal";
+import RemoveRolesModal from "@/components/roles/RemoveRolesModal";
 
 export default function PersonListPage() {
   const [persons, setPersons] = useState<PersonResponse[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [addRolesModalOpen, setAddRolesModalOpen] = useState(false);
+  const [removeRolesModalOpen, setRemoveRolesModalOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedUserName, setSelectedUserName] = useState<string | null>(null);
+  const [selectedUserRoles, setSelectedUserRoles] = useState<string[]>([]);
+
+  const openAddRolesModal = (userName: string, userId: string, roles: Role[]) => {
+    setSelectedUserName(userName);
+    setSelectedUserId(userId);
+    setSelectedUserRoles(roles.map((r) => r.role));
+    setAddRolesModalOpen(true);
+  };
+
+  const openRemoveRolesModal = (userName: string, userId: string, roles: Role[]) => {
+    setSelectedUserName(userName);
+    setSelectedUserId(userId);
+    setSelectedUserRoles(roles.map((r) => r.role));
+    setRemoveRolesModalOpen(true);
+  };
+
+  const clearValuesFromAddRolesModal = () => {
+    setSelectedUserName(null);
+    setSelectedUserId(null);
+    setSelectedUserRoles([""]);
+    setAddRolesModalOpen(false);
+  };
+
+  const clearValuesFromRemoveRolesModal = () => {
+    setSelectedUserName(null);
+    setSelectedUserId(null);
+    setSelectedUserRoles([""]);
+    setRemoveRolesModalOpen(false);
+  };
+
+  async function fetchPersons() {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        toast.error("Token de acesso não encontrado.");
+        return;
+      }
+
+      const response = await getPersonsPage(token, currentPage);
+      setPersons(response.content || []);
+      setTotalPages(response.totalPages);
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao buscar pessoas.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    async function fetchPersons() {
-      try {
-        setLoading(true);
-        const token = localStorage.getItem("accessToken");
-        if (!token) {
-          toast.error("Token de acesso não encontrado.");
-          return;
-        }
-
-        const response = await getPersonsPage(token, currentPage);
-        setPersons(response.content || []);
-        setTotalPages(response.totalPages);
-      } catch (error: any) {
-        toast.error(error.message || "Erro ao buscar pessoas.");
-      } finally {
-        setLoading(false);
-      }
-    }
-
     fetchPersons();
   }, [currentPage]);
 
@@ -54,7 +97,9 @@ export default function PersonListPage() {
               <div className="flex items-center gap-4 w-full text-left">
                 <Avatar
                   className="h-9 w-9 border border-neutral-600"
-                  src={`https://randomuser.me/api/portraits/men/${Math.floor(Math.random() * 100)}.jpg`} // temporário, depois poderá ser substituído por algo como "{person.photo} || {user?.imageUrl}"
+                  src={`https://randomuser.me/api/portraits/men/${Math.floor(
+                    Math.random() * 100
+                  )}.jpg`} // temporário, depois poderá ser substituído por algo como "{person.photo} || {user?.imageUrl}"
                   alt="{user?.name}"
                 />
                 <div className="flex flex-col flex-1">
@@ -65,28 +110,39 @@ export default function PersonListPage() {
                     {person.name}
                   </span>
                   <span className="text-sm text-neutral-300">
-                  {genderTypeLabels[person.gender] || person.gender}
+                    {genderTypeLabels[person.gender] || person.gender}
                   </span>
                 </div>
                 <div className="text-sm text-neutral-400 text-right">
                   <p className="font-bold text-orange-500 mb-1">Permissões</p>
-                  <p>{person.login.roles?.map(r => roleTypeLabels[r.role] || r.role).join(", ")}</p>
+                  <p>
+                    {person.login.roles
+                      ?.map((r) => roleTypeLabels[r.role] || r.role)
+                      .join(", ")}
+                  </p>
                 </div>
               </div>
             </AccordionTrigger>
             <AccordionContent className="bg-neutral-900 px-6 py-4 text-white rounded-b-md border border-t-0 border-neutral-700">
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                 <li>
-                  <strong>Data de nascimento:</strong> {new Date(person.birthdate + "T00:00:00").toLocaleDateString()}
+                  <strong>Data de nascimento:</strong>{" "}
+                  {new Date(
+                    person.birthdate + "T00:00:00"
+                  ).toLocaleDateString()}
                 </li>
                 <li>
-                  <strong>Estado civil:</strong> {maritalStatusTypeLabels[person.maritalStatus] || person.maritalStatus}
+                  <strong>Estado civil:</strong>{" "}
+                  {maritalStatusTypeLabels[person.maritalStatus] ||
+                    person.maritalStatus}
                 </li>
                 <li>
                   <strong>Tamanho vestimenta:</strong> {person.clothingSize}
                 </li>
                 <li>
-                  <strong>Tipo de voz coral:</strong> {choralVoiceTypeLabels[person.choralVoiceType] || person.choralVoiceType}
+                  <strong>Tipo de voz coral:</strong>{" "}
+                  {choralVoiceTypeLabels[person.choralVoiceType] ||
+                    person.choralVoiceType}
                 </li>
                 <li>
                   <strong>Telefone:</strong> {person.contact?.phoneNumber}
@@ -105,12 +161,68 @@ export default function PersonListPage() {
                   <strong>Líder:</strong> {person.isLeader ? "Sim" : "Não"}
                 </li>
                 <li>
-                  <strong>Data do último acesso:</strong> {person.login.lastLogin ? new Date(person.login.lastLogin).toLocaleDateString() : "-"}
+                  <strong>Data do último acesso:</strong>{" "}
+                  {person.login.lastLogin
+                    ? new Date(person.login.lastLogin).toLocaleDateString()
+                    : "-"}
                 </li>
               </ul>
+
+              <div className="flex justify-end gap-3 mt-4">
+                    <Button
+                      className="mt-1 text-xs text-neutral-300 hover:text-orange-400 transition-colors font-medium"
+                      onClick={(e) => {
+                        e.stopPropagation(); // evita abrir/fechar o accordion
+                        openAddRolesModal(
+                          person.login.username,
+                          person.login.id,
+                          person.login.roles || []
+                        );
+                      }}
+                    >
+                      Adicionar Permissão
+                    </Button>
+                    <Button
+                      className="mt-1 text-xs text-neutral-300 hover:text-orange-400 transition-colors font-medium"
+                      onClick={(e) => {
+                        e.stopPropagation(); // evita abrir/fechar o accordion
+                        openRemoveRolesModal(
+                          person.login.username,
+                          person.login.id,
+                          person.login.roles || []
+                        );
+                      }}
+                    >
+                      Remover Permissão
+                    </Button>
+                  </div>
             </AccordionContent>
           </AccordionItem>
         ))}
+        <AddRolesModal
+          open={addRolesModalOpen}
+          onClose={() => clearValuesFromAddRolesModal()}
+          userName={selectedUserName!}
+          userId={selectedUserId!}
+          currentRoles={selectedUserRoles}
+          onSuccess={() => {
+            clearValuesFromAddRolesModal();
+            setCurrentPage((prev) => prev);
+            fetchPersons();
+          }}
+        />
+        <RemoveRolesModal
+          open={removeRolesModalOpen}
+          onClose={() => clearValuesFromRemoveRolesModal()}
+          userName={selectedUserName!}
+          userId={selectedUserId!}
+          currentRoles={selectedUserRoles}
+          onSuccess={() => {
+            clearValuesFromRemoveRolesModal();
+            setCurrentPage((prev) => prev);
+            fetchPersons();
+          }}
+        />
       </Accordion>
 
       {!loading && (
