@@ -11,8 +11,8 @@ import {
   TicketPercent,
   Church,
   CalendarClock,
-  ShieldCheck,
   Menu,
+  CheckCircleIcon,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import {
@@ -61,8 +61,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           <NavItem href="/persons" icon={<Users size={18} />}>
             Usuários
           </NavItem>
-          <NavItem href="/roles" icon={<ShieldCheck size={18} />}>
-            Papéis
+          <NavItem href="/checkins" icon={<CheckCircleIcon size={18} />}>
+            Checkins
           </NavItem>
           <NavItem href="/configurations" icon={<Settings size={18} />}>
             Configurações
@@ -176,9 +176,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               <DropdownMenuItem asChild>
                 <Link
                   className="flex items-center justify-start gap-2"
-                  href="/roles"
+                  href="/checkins"
                 >
-                  {<ShieldCheck size={14} />} Papéis
+                  {<CheckCircleIcon size={14} />} Checkins
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
