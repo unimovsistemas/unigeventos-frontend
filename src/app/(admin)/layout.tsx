@@ -13,6 +13,8 @@ import {
   CalendarClock,
   Menu,
   CheckCircleIcon,
+  SubscriptIcon,
+  LucideCalendarCheck,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import {
@@ -63,6 +65,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </NavItem>
           <NavItem href="/checkins" icon={<CheckCircleIcon size={18} />}>
             Checkins
+          </NavItem>
+          <NavItem href="/subscriptions" icon={<LucideCalendarCheck size={18} />}>
+            Inscrições por Evento
           </NavItem>
           <NavItem href="/configurations" icon={<Settings size={18} />}>
             Configurações

@@ -53,10 +53,13 @@ export const getSubscriptionsByEvent = async (
   id: string
 ): Promise<SubscriptionsByEventResponse[]> => {
   try {
-    const response = await axios.get(`${API_URL}/entities/${id}`, {
+    const response = await axios.get(`${API_URL}/queries/subscriptions-by-event`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
+      params: {
+        "eventId": id
+      }
     });
 
     return response.data;
