@@ -52,11 +52,12 @@ export const checkin = async (
 export const getSubscriptionsByEvent = async (
   accessToken: string,
   id: string,
+  searchTerm = "",
   page: number = 0,
   size: number = 10
 ): Promise<SubscriptionsByEventResponse[]> => {
   try {
-    const response = await axios.get(`${API_URL}/queries/subscriptions-by-event?page=${page}&size=${size}`, {
+    const response = await axios.get(`${API_URL}/queries/subscriptions-by-event?page=${page}&size=${size}&searchTerms=${encodeURIComponent(searchTerm)}`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import AsyncSelect from "react-select/async";
 import debounce from "lodash.debounce";
 import { EventDataResponse, getAllPage } from "@/services/eventsService";
@@ -41,6 +41,29 @@ export default function EventSubscriptionList() {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
 
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debounceSearch, setDebouncedSearch] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [dataLoaded, setDataLoaded] = useState(false);
+
+  const debouncedSetSearch = useCallback(
+    debounce((value: string) => {
+      setDebouncedSearch(value);
+    }, 500),
+    []
+  );
+
+  useEffect(() => {
+    debouncedSetSearch(searchTerm);
+  }, [searchTerm, debouncedSetSearch]);
+
+  useEffect(() => {
+    if (dataLoaded && inputRef.current) {
+      inputRef.current.focus();
+      setDataLoaded(false); // impede foco repetido
+    }
+  }, [dataLoaded]);
+
   const loadOptions = async (inputValue: string) => {
     const token = localStorage.getItem("accessToken");
     if (!token) return [];
@@ -68,15 +91,51 @@ export default function EventSubscriptionList() {
 
     setLoading(true);
     try {
-      const res = await getSubscriptionsByEvent(token, eventId, page, 9); // ajusta para paginação de 9
+      const res = await getSubscriptionsByEvent(
+        token,
+        eventId,
+        debounceSearch,
+        page,
+        9
+      ); // ajusta para paginação de 9
       setSubscriptions(res.content || []);
       setTotalPages(res.totalPages || 0);
+      // Mantém o foco no campo de busca
+      setDataLoaded(true);
     } catch (error: any) {
       toast.error(error.message || "Erro ao buscar inscrições.");
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    async function fetchSubscriptionsUseEffect() {
+      const token = localStorage.getItem("accessToken");
+      if (!token || !selectedEvent) return;
+
+      setLoading(true);
+      try {
+        const res = await getSubscriptionsByEvent(
+          token,
+          selectedEvent.value,
+          debounceSearch,
+          0,
+          9
+        ); // ajusta para paginação de 9
+        setSubscriptions(res.content || []);
+        setTotalPages(res.totalPages || 0);
+        // Mantém o foco no campo de busca
+        setDataLoaded(true);
+      } catch (error: any) {
+        toast.error(error.message || "Erro ao buscar inscrições.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchSubscriptionsUseEffect();
+  }, [currentPage, debounceSearch]);
 
   const handleEventChange = async (selected: any) => {
     setSelectedEvent(selected);
@@ -137,11 +196,23 @@ export default function EventSubscriptionList() {
           onChange={handleEventChange}
           value={selectedEvent}
           placeholder="Digite o nome do evento..."
-          className="text-black focus:outline-none focus:ring-2 focus:ring-orange-500"
+          className="text-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-500"
         />
       </div>
 
       {loading && <p className="text-neutral-400">Carregando inscrições...</p>}
+
+      <div className="flex items-center justify-between mb-10">
+        <input
+          type="text"
+          ref={inputRef}
+          placeholder="Buscar pelo nome do participante"
+          disabled={!selectedEvent}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="border border-gray-300 text-gray-600 rounded-lg px-3 py-2 w-80"
+        />
+      </div>
 
       {!loading && selectedEvent && subscriptions.length === 0 && (
         <p className="text-neutral-400">Nenhuma inscrição encontrada.</p>
