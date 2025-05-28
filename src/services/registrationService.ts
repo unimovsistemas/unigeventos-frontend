@@ -27,6 +27,7 @@ export interface SubscriptionsByEventResponse {
     ministries: string;
     additionalInfo: string;
     qrCodeBase64: string;
+    checkedIn: boolean;
 }
 
 const API_URL = "http://localhost:8001/rest/v1/registrations";
@@ -50,10 +51,12 @@ export const checkin = async (
 
 export const getSubscriptionsByEvent = async (
   accessToken: string,
-  id: string
+  id: string,
+  page: number = 0,
+  size: number = 10
 ): Promise<SubscriptionsByEventResponse[]> => {
   try {
-    const response = await axios.get(`${API_URL}/queries/subscriptions-by-event`, {
+    const response = await axios.get(`${API_URL}/queries/subscriptions-by-event?page=${page}&size=${size}`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
