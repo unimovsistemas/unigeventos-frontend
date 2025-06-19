@@ -49,6 +49,91 @@ export const checkin = async (
   }
 };
 
+export const cancelRegistration = async (
+  accessToken: string,
+  registrationId: string
+): Promise<void> => {
+  try {
+    await axios.post(`${API_URL}/actions/cancel/${registrationId}`, null, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message || "Erro ao realizar o cancelamento da inscrição"
+    );
+  }
+};
+
+export const repay = async (
+  accessToken: string,
+  registrationId: string
+): Promise<void> => {
+  try {
+    await axios.post(`${API_URL}/actions/repay/${registrationId}`, null, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message || "Erro ao realizar o reembolso da inscrição"
+    );
+  }
+};
+
+export const putOnWaitingList = async (
+  accessToken: string,
+  registrationId: string
+): Promise<void> => {
+  try {
+    await axios.post(`${API_URL}/actions/put-waiting-list/${registrationId}`, null, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message || "Erro ao colocar a inscrição na lista de espera"
+    );
+  }
+};
+
+export const changeBatch = async (
+  accessToken: string,
+  registrationId: string
+): Promise<void> => {
+  try {
+    await axios.post(`${API_URL}/actions/change-batch/${registrationId}`, null, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message || "Erro ao alterar o lote da inscrição"
+    );
+  }
+};
+
+export const attachTerm = async (
+  accessToken: string,
+  registrationId: string
+): Promise<void> => {
+  try {
+    await axios.post(`${API_URL}/actions/attach-term/${registrationId}`, null, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message || "Erro ao alterar o lote da inscrição"
+    );
+  }
+};
+
 export const getSubscriptionsByEvent = async (
   accessToken: string,
   id: string,

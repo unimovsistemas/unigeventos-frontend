@@ -2,17 +2,30 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
-import AsyncSelect from "react-select/async";
 import debounce from "lodash.debounce";
 import { EventDataResponse, getAllPage } from "@/services/eventsService";
 import {
+  cancelRegistration,
   checkin,
   getSubscriptionsByEvent,
+  repay,
   SubscriptionsByEventResponse,
 } from "@/services/registrationService";
 import { toast } from "react-toastify";
 import { Button } from "@/components/ui/button";
-import { ArrowLeftCircle, ArrowRightCircle } from "lucide-react";
+import { ArrowLeftCircle, ArrowRightCircle, MoreVertical } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@radix-ui/react-dropdown-menu";
+import dynamic from "next/dynamic";
+import { putOnWaitingList } from "../../../../services/registrationService";
+
+const ClientOnlyAsyncSelect = dynamic(() => import("react-select/async"), {
+  ssr: false,
+});
 
 export const SubscriptionStatusLabels: Record<string, string> = {
   PENDING: "PENDENTE",
@@ -163,6 +176,63 @@ export default function EventSubscriptionList() {
     }
   };
 
+  const handleCancel = async (registrationId: string) => {
+    try {
+      const token =
+        typeof window !== "undefined"
+          ? localStorage.getItem("accessToken")
+          : "";
+
+      if (!token) {
+        toast.error("Usuário não autorizado para realizar esta ação!");
+        return;
+      }
+
+      await cancelRegistration(token, registrationId);
+      toast.success("Cancelamento da inscrição realizado com sucesso!");
+    } catch (error: any) {
+      toast.error(`Erro ao fazer check-in. Causa: ${error.message}`);
+    }
+  };
+
+  const handlePutOnWaitingList = async (registrationId: string) => {
+    try {
+      const token =
+        typeof window !== "undefined"
+          ? localStorage.getItem("accessToken")
+          : "";
+
+      if (!token) {
+        toast.error("Usuário não autorizado para realizar esta ação!");
+        return;
+      }
+
+      await putOnWaitingList(token, registrationId);
+      toast.success("Inscrição alterada para lista de espera com sucesso!");
+    } catch (error: any) {
+      toast.error(`Erro ao fazer check-in. Causa: ${error.message}`);
+    }
+  };
+
+  const handleRepay = async (registrationId: string) => {
+    try {
+      const token =
+        typeof window !== "undefined"
+          ? localStorage.getItem("accessToken")
+          : "";
+
+      if (!token) {
+        toast.error("Usuário não autorizado para realizar esta ação!");
+        return;
+      }
+
+      await repay(token, registrationId);
+      toast.success("Inscrição reembolsada com sucesso!");
+    } catch (error: any) {
+      toast.error(`Erro ao fazer check-in. Causa: ${error.message}`);
+    }
+  };
+
   const handlePrevPage = () => {
     if (currentPage > 0 && selectedEvent) {
       const newPage = currentPage - 1;
@@ -186,7 +256,7 @@ export default function EventSubscriptionList() {
       </h1>
 
       <div className="mb-6">
-        <AsyncSelect
+        <ClientOnlyAsyncSelect
           isClearable
           cacheOptions
           defaultOptions
@@ -222,71 +292,160 @@ export default function EventSubscriptionList() {
         {subscriptions.map((sub) => (
           <div
             key={sub.id}
-            className="p-4 bg-gradient-to-br from-[#222222] via-[#2b2b2b] to-[#1e1e1e] border border-neutral-700 rounded-lg shadow-md hover:shadow-lg transition"
+            className="relative flex flex-col justify-between p-4 bg-gradient-to-br from-[#222222] via-[#2b2b2b] to-[#1e1e1e] border border-neutral-700 rounded-lg shadow-md hover:shadow-lg transition"
           >
-            <h2 className="text-xl font-semibold text-orange-300">
-              {sub.personName}
-            </h2>
-            <p className="text-sm text-neutral-400 mt-1">
-              Inscrição:{" "}
-              <span className="font-medium text-neutral-300">
-                {new Date(sub.registrationDate).toLocaleDateString()}
-              </span>
-            </p>
-            <p className="text-sm mt-1">
-              <span className="font-medium text-neutral-400">Status:</span>{" "}
-              <span
-                className={`font-semibold ${
-                  sub.status === "CONFIRMED"
-                    ? "text-green-500"
-                    : "text-yellow-500"
-                }`}
-              >
-                {SubscriptionStatusLabels[sub.status] || sub.status}
-              </span>
-            </p>
-            <p className="text-sm text-neutral-300 mt-1">
-              <strong>Valor pago:</strong> R$ {sub.amountPaid.toFixed(2)}
-            </p>
-            <p className="text-sm text-neutral-300">
-              <strong>Desconto:</strong> R$ {sub.totalDiscount.toFixed(2)}
-            </p>
-            <p className="text-sm text-neutral-300">
-              <strong>Transporte:</strong>{" "}
-              {TransportationLabels[sub.transportationType] ||
-                sub.transportationType}
-            </p>
-            {sub.ministries && (
-              <p className="text-sm text-neutral-300">
-                <strong>Ministérios:</strong> {sub.ministries}
-              </p>
-            )}
-            {sub.additionalInfo && (
-              <p className="text-sm text-neutral-400">
-                <strong>Info adicional:</strong> {sub.additionalInfo}
-              </p>
-            )}
-            <div className="mt-4 flex flex-col gap-3 items-center justify-center">
-              <img
-                src={`data:image/png;base64,${sub.qrCodeBase64}`}
-                alt="QR Code"
-                className="w-24 h-24 rounded-md border border-neutral-600"
-              />
-              {sub.status === "CONFIRMED" && !sub.checkedIn && (
-                <Button
-                  onClick={() => handleCheckin(sub.id)}
-                  disabled={loading}
-                  variant="outline"
-                  className="py-2 px-2 rounded-lg text-white bg-gradient-to-r from-orange-500 to-red-600 hover:bg-gradient-to-l transition-colors duration-300"
+            {/* Botão de Ações */}
+            <div className="flex items-start justify-between mb-4">
+              <h2 className="text-xl font-semibold text-orange-300">
+                {sub.personName}
+              </h2>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="py-2 px-2 rounded-lg text-white bg-gradient-to-r from-orange-500 to-red-600 hover:bg-gradient-to-l transition-colors duration-300"
+                  >
+                    <MoreVertical className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent
+                  side="bottom"
+                  align="end"
+                  className="bg-[#2b2b2b] border border-neutral-700 text-white rounded-md shadow-lg w-56 mt-2"
                 >
-                  Check-in Manual
-                </Button>
-              )}
-              {sub.checkedIn && (
-                <span className="top-2 right-2 bg-green-600 text-white text-xs font-semibold px-2 py-1 rounded-full shadow">
-                  CheckIn Realizado
+                  <DropdownMenuItem
+                    disabled={sub.checkedIn || sub.status !== "CONFIRMED"}
+                    onSelect={() => handleCheckin(sub.id)}
+                    className={`px-4 py-2 text-sm rounded-md transition-colors duration-200
+    ${
+      sub.checkedIn || sub.status !== "CONFIRMED"
+        ? "text-neutral-400 cursor-not-allowed"
+        : "text-neutral-200 hover:bg-neutral-700 hover:text-white cursor-pointer"
+    }`}
+                  >
+                    Check-in Manual
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    disabled={sub.checkedIn || sub.status === "CONFIRMED"}
+                    onSelect={() => handleCancel(sub.id)}
+                    className={`px-4 py-2 text-sm rounded-md transition-colors duration-200
+    ${
+      sub.checkedIn || sub.status === "CONFIRMED"
+        ? "text-neutral-400 cursor-not-allowed"
+        : "text-neutral-200 hover:bg-neutral-700 hover:text-white cursor-pointer"
+    }`}
+                  >
+                    Cancelar
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    disabled={sub.checkedIn || sub.status !== "PENDING"}
+                    onSelect={() => handlePutOnWaitingList(sub.id)}
+                    className={`px-4 py-2 text-sm rounded-md transition-colors duration-200
+    ${
+      sub.checkedIn || sub.status !== "PENDING"
+        ? "text-neutral-400 cursor-not-allowed"
+        : "text-neutral-200 hover:bg-neutral-700 hover:text-white cursor-pointer"
+    }`}
+                  >
+                    Lista de Espera
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    disabled={
+                      sub.checkedIn ||
+                      (sub.status !== "PENDING" && sub.status !== "WAITLIST")
+                    }
+                    onSelect={() => console.log("Alterar Lote", sub.id)}
+                    className={`px-4 py-2 text-sm rounded-md transition-colors duration-200
+    ${
+      sub.checkedIn || (sub.status !== "PENDING" && sub.status !== "WAITLIST")
+        ? "text-neutral-400 cursor-not-allowed"
+        : "text-neutral-200 hover:bg-neutral-700 hover:text-white cursor-pointer"
+    }`}
+                  >
+                    Alterar Lote
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    disabled={sub.checkedIn || sub.status !== "CONFIRMED"}
+                    onSelect={() => handleRepay(sub.id)}
+                    className={`px-4 py-2 text-sm rounded-md transition-colors duration-200
+    ${
+      sub.checkedIn || sub.status !== "CONFIRMED"
+        ? "text-neutral-400 cursor-not-allowed"
+        : "text-neutral-200 hover:bg-neutral-700 hover:text-white cursor-pointer"
+    }`}
+                  >
+                    Reembolsar
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => console.log("Anexar Termo", sub.id)}
+                    className="px-4 py-2 text-sm text-neutral-200 hover:bg-neutral-700 hover:text-white transition-colors duration-200 cursor-pointer rounded-md"
+                  >
+                    Anexar Termo
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => console.log("Baixar Termo", sub.id)}
+                    className="px-4 py-2 text-sm text-neutral-200 hover:bg-neutral-700 hover:text-white transition-colors duration-200 cursor-pointer rounded-md"
+                  >
+                    Baixar Termo
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            <div className="flex-1">
+              <p className="text-sm text-neutral-400 mt-1">
+                Inscrição:{" "}
+                <span className="font-medium text-neutral-300">
+                  {new Date(sub.registrationDate).toLocaleDateString()}
                 </span>
+              </p>
+              <p className="text-sm mt-1">
+                <span className="font-medium text-neutral-400">Status:</span>{" "}
+                <span
+                  className={`font-semibold ${
+                    sub.status === "CONFIRMED"
+                      ? "text-green-500"
+                      : "text-yellow-500"
+                  }`}
+                >
+                  {SubscriptionStatusLabels[sub.status] || sub.status}
+                </span>
+              </p>
+              <p className="text-sm text-neutral-300 mt-1">
+                <strong>Valor pago:</strong> R$ {sub.amountPaid.toFixed(2)}
+              </p>
+              <p className="text-sm text-neutral-300">
+                <strong>Desconto:</strong> R$ {sub.totalDiscount.toFixed(2)}
+              </p>
+              <p className="text-sm text-neutral-300">
+                <strong>Transporte:</strong>{" "}
+                {TransportationLabels[sub.transportationType] ||
+                  sub.transportationType}
+              </p>
+              {sub.ministries && (
+                <p className="text-sm text-neutral-300">
+                  <strong>Ministérios:</strong> {sub.ministries}
+                </p>
               )}
+              {sub.additionalInfo && (
+                <p className="text-sm text-neutral-400">
+                  <strong>Info adicional:</strong> {sub.additionalInfo}
+                </p>
+              )}
+              <div className="mt-4 flex flex-col gap-3 items-center justify-center">
+                <img
+                  src={`data:image/png;base64,${sub.qrCodeBase64}`}
+                  alt="QR Code"
+                  className="w-24 h-24 rounded-md border border-neutral-600"
+                />
+                {sub.checkedIn && sub.status === "CONFIRMED" && (
+                  <span className="top-2 right-2 bg-green-600 text-white text-xs font-semibold px-2 py-1 rounded-full shadow">
+                    CheckIn Realizado
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         ))}
