@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import axios from "axios";
+import { Batch } from "./eventsService";
 
 export type SubscriptionStatus =
   | "PENDING"
@@ -28,6 +29,7 @@ export interface SubscriptionsByEventResponse {
     additionalInfo: string;
     qrCodeBase64: string;
     checkedIn: boolean;
+    batch: Batch;
 }
 
 const API_URL = "http://localhost:8001/rest/v1/registrations";
@@ -102,13 +104,17 @@ export const putOnWaitingList = async (
 
 export const changeBatch = async (
   accessToken: string,
-  registrationId: string
+  registrationId: string,
+  newBatchId: string,
 ): Promise<void> => {
   try {
     await axios.post(`${API_URL}/actions/change-batch/${registrationId}`, null, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
+      params: {
+        batchId: newBatchId
+      }
     });
   } catch (error: any) {
     throw new Error(

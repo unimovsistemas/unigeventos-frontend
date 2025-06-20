@@ -3,6 +3,7 @@
 import axios from "axios";
 
 export interface Batch {
+  id: string;
   name: string;
   capacity: number;
   price: number;

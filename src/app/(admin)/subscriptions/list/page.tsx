@@ -3,9 +3,10 @@
 
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import debounce from "lodash.debounce";
-import { EventDataResponse, getAllPage } from "@/services/eventsService";
+import { Batch, EventDataResponse, getAllPage } from "@/services/eventsService";
 import {
   cancelRegistration,
+  changeBatch,
   checkin,
   getSubscriptionsByEvent,
   repay,
@@ -22,6 +23,13 @@ import {
 } from "@radix-ui/react-dropdown-menu";
 import dynamic from "next/dynamic";
 import { putOnWaitingList } from "../../../../services/registrationService";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/Dialog";
 
 const ClientOnlyAsyncSelect = dynamic(() => import("react-select/async"), {
   ssr: false,
@@ -45,6 +53,7 @@ export default function EventSubscriptionList() {
   const [selectedEvent, setSelectedEvent] = useState<{
     label: string;
     value: string;
+    batches: Batch[];
   } | null>(null);
   const [subscriptions, setSubscriptions] = useState<
     SubscriptionsByEventResponse[]
@@ -58,6 +67,11 @@ export default function EventSubscriptionList() {
   const [debounceSearch, setDebouncedSearch] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [isChangeBatchModalOpen, setIsChangeBatchModalOpen] = useState(false);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [selectedSubId, setSelectedSubId] = useState<string | null>(null);
+  const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
+  const [batches, setBatches] = useState<Batch[]>([]);
 
   const debouncedSetSearch = useCallback(
     debounce((value: string) => {
@@ -85,6 +99,7 @@ export default function EventSubscriptionList() {
       const response = await getAllPage(token, inputValue, true, 0, 10);
       return response.content.map((event: EventDataResponse) => ({
         value: event.id,
+        batches: event.batches,
         label: `${event.name} - ${new Date(
           event.startDatetime
         ).toLocaleDateString()}`,
@@ -233,6 +248,32 @@ export default function EventSubscriptionList() {
     }
   };
 
+  const changeEventBatch = async () => {
+    if (selectedSubId && selectedBatchId) {
+      try {
+        const token =
+          typeof window !== "undefined"
+            ? localStorage.getItem("accessToken")
+            : "";
+
+        if (!token) {
+          toast.error("Usuário não autorizado para realizar esta ação!");
+          return;
+        }
+
+        await changeBatch(token, selectedSubId, selectedBatchId);
+        toast.success("Lote alterado com sucesso.");
+        setIsChangeBatchModalOpen(false);
+        setSelectedBatchId(null);
+        // atualizar lista se necessário
+      } catch (err: any) {
+        toast.error(err?.response?.data?.message || "Erro ao alterar lote.");
+      }
+    } else {
+      toast.error("Selecione um lote.");
+    }
+  };
+
   const handlePrevPage = () => {
     if (currentPage > 0 && selectedEvent) {
       const newPage = currentPage - 1;
@@ -356,7 +397,11 @@ export default function EventSubscriptionList() {
                       sub.checkedIn ||
                       (sub.status !== "PENDING" && sub.status !== "WAITLIST")
                     }
-                    onSelect={() => console.log("Alterar Lote", sub.id)}
+                    onSelect={() => {
+                      setSelectedSubId(sub.id);
+                      setSelectedBatchId(sub.batch.id)
+                      setIsChangeBatchModalOpen(true);
+                    }}
                     className={`px-4 py-2 text-sm rounded-md transition-colors duration-200
     ${
       sub.checkedIn || (sub.status !== "PENDING" && sub.status !== "WAITLIST")
@@ -412,6 +457,9 @@ export default function EventSubscriptionList() {
                 >
                   {SubscriptionStatusLabels[sub.status] || sub.status}
                 </span>
+              </p>
+              <p className="text-sm text-neutral-300 mt-1">
+                <strong>Lote:</strong> {sub.batch.name}
               </p>
               <p className="text-sm text-neutral-300 mt-1">
                 <strong>Valor pago:</strong> R$ {sub.amountPaid.toFixed(2)}
@@ -483,6 +531,55 @@ export default function EventSubscriptionList() {
           </Button>
         </div>
       )}
+      <Dialog
+        open={isChangeBatchModalOpen}
+        onOpenChange={setIsChangeBatchModalOpen}
+      >
+        <DialogContent className="bg-neutral-900 text-white border border-neutral-700">
+          <DialogHeader>
+            <DialogTitle>Alterar lote da inscrição</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <label htmlFor="batch-select" className="text-sm">
+              Selecione o novo lote:
+            </label>
+            <select
+              id="batch-select"
+              className="bg-neutral-800 text-white border border-neutral-600 rounded-md px-3 py-2 w-full"
+              value={selectedBatchId || ""}
+              onChange={(e) => setSelectedBatchId(e.target.value)}
+            >
+              <option value="" disabled>
+                -- Selecione um lote --
+              </option>
+              {selectedEvent?.batches.map((batch) => (
+                <option key={batch.id} value={batch.id}>
+                  {batch.name} - R$ {batch.price.toFixed(2)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <DialogFooter className="mt-4">
+            <Button
+              onClick={() => {
+                setIsChangeBatchModalOpen(false);
+                setSelectedBatchId(null);
+              }}
+              className="text-white border-neutral-600"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => changeEventBatch()}
+              className="text-orange-400 hover:text-orange-500 border-orange-600"
+            >
+              Confirmar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
