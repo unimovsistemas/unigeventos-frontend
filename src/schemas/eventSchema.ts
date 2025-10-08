@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 const batchSchema = z.object({
+  id: z.string().optional(), // ID é opcional para criação
   name: z.string().min(1, "Nome do lote é obrigatório"),
   capacity: z
     .number({ invalid_type_error: "Capacidade do lote é obrigatório" })

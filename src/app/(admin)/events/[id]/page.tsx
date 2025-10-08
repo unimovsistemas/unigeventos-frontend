@@ -7,8 +7,10 @@ import { EventForm } from "@/components/events/EventForm";
 import { EventFormData } from "@/schemas/eventSchema";
 import { getEventById, updateEvent } from "@/services/eventsService";
 import { getAll, OrganizerResponse } from "@/services/organizersService"
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft, Edit, Calendar } from "lucide-react";
 import { toast } from "react-toastify";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default function EditEventPage() {
   const { id } = useParams();
@@ -50,7 +52,7 @@ export default function EditEventPage() {
         setOrganizers(organizersResponse);
       } catch (error: any) {
         toast.error(`Erro ao carregar o evento. Causa: ${error.message}`);
-        router.push("/events");
+        router.push("/events/list");
       } finally {
         setLoading(false);
       }
@@ -67,9 +69,19 @@ export default function EditEventPage() {
     try {
       if (!token) return;
 
-      await updateEvent(token, id as string, data);
+      // Transformar dados para o formato esperado pelo serviço
+      const eventData = {
+        ...data,
+        organizerId: data.organizer.id,
+        batches: data.batches?.map(batch => ({
+          ...batch,
+          id: batch.id || "" // Manter ID existente ou usar string vazia para novos
+        })) || []
+      };
+
+      await updateEvent(token, id as string, eventData);
       toast.success("Evento atualizado com sucesso!");
-      router.push("/events");
+      router.push("/events/list");
     } catch (error: any) {
       toast.error(`Erro ao atualizar o evento. Causa: ${error.message}`);
     } finally {
@@ -79,22 +91,59 @@ export default function EditEventPage() {
 
   if (loading || !eventData) {
     return (
-      <div className="flex justify-center items-center h-96">
-        <Loader2 className="h-6 w-6 animate-spin" />
-        <span className="ml-2">Carregando evento...</span>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex items-center gap-2 text-orange-400">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>Carregando evento...</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-3xl mx-auto py-10">
-      <h1 className="text-2xl font-bold mb-6">Editar Evento</h1>
-      <EventForm
-        defaultValues={eventData}
-        onSubmit={handleUpdate}
-        isSubmitting={submitting}
-        organizers={organizers}
-      />
+    <div className="min-h-screen p-6">
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-4 mb-8">
+          <Link href="/events/list">
+            <Button className="bg-neutral-800 hover:bg-neutral-700 text-orange-400 border border-neutral-600 p-2">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-orange-600/20 rounded-lg">
+              <Edit className="h-8 w-8 text-orange-400" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-orange-400">Editar Evento</h1>
+              <p className="text-neutral-400 text-sm">
+                {eventData?.name || "Atualize as informações do evento"}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Form */}
+        <EventForm
+          defaultValues={eventData}
+          onSubmit={handleUpdate}
+          isSubmitting={submitting}
+          organizers={organizers}
+        />
+
+        {/* Help Text */}
+        <div className="text-center text-sm text-neutral-400">
+          <p>
+            Modifique os campos necessários e salve as alterações.{" "}
+            <Link 
+              href="/events/list" 
+              className="text-orange-400 hover:text-orange-300 underline"
+            >
+              Voltar para a lista de eventos
+            </Link>
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

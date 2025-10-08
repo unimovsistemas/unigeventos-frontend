@@ -1,11 +1,27 @@
 "use client";
 
+import React from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { 
+  Loader2, 
+  Calendar, 
+  MapPin, 
+  FileText, 
+  Tag, 
+  Users, 
+  Clock, 
+  DollarSign, 
+  Settings, 
+  ChevronLeft, 
+  ChevronRight,
+  Save,
+  X,
+  Info
+} from "lucide-react";
 import { EventFormData, eventSchema } from "@/schemas/eventSchema";
 import Select from "../ui/select";
 import { CustomToggle } from "../ui/customToggle";
@@ -14,6 +30,7 @@ import { CustomDatePicker } from "../ui/CustomDatePicker";
 import { BatchList } from "./BatchList";
 import Link from "next/link";
 import { OrganizerResponse } from "@/services/organizersService";
+import { Card } from "@/components/ui/card";
 
 interface EventFormProps {
   onSubmit: (data: EventFormData) => void;
@@ -44,10 +61,10 @@ const eventTypes = [
 ];
 
 const steps = [
-  "Informações Básicas",
-  "Datas e Capacidade",
-  "Lotes",
-  "Opções Finais",
+  { title: "Informações Básicas", icon: Info, description: "Nome, descrição e tipo do evento" },
+  { title: "Datas e Capacidade", icon: Calendar, description: "Cronograma e limites do evento" },
+  { title: "Lotes", icon: DollarSign, description: "Configuração de preços e lotes" },
+  { title: "Opções Finais", icon: Settings, description: "Configurações adicionais" },
 ];
 
 export function EventForm({
@@ -119,295 +136,490 @@ export function EventForm({
 
   return (
     <FormProvider {...methods}>
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="space-y-4 max-w-3xl mx-auto"
-      >
-        <div className="mb-4">
-          <h2 className="text-lg font-semibold">{steps[step]}</h2>
-        </div>
-
-        {step === 0 && (
-          <>
-            <div>
-              <Input placeholder="Nome do evento" {...register("name")} />
-              {errors.name && (
-                <p className="text-orange-500 text-sm">{errors.name.message}</p>
-              )}
-            </div>
-
-            <div>
-              <Input
-                placeholder="Descrição do evento"
-                {...register("description")}
-              />
-              {errors.description && (
-                <p className="text-orange-500 text-sm">
-                  {errors.description.message}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <Input placeholder="Local do evento" {...register("location")} />
-              {errors.location && (
-                <p className="text-orange-500 text-sm">
-                  {errors.location.message}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <Controller
-                name="type"
-                control={control}
-                render={({ field }) => (
-                  <Select
-                    {...field}
-                    options={eventTypes}
-                    placeholder="Selecione o tipo de evento"
-                    value={field.value}
-                  />
-                )}
-              />
-              {errors.type && (
-                <p className="text-orange-500 text-sm">{errors.type.message}</p>
-              )}
-            </div>
-
-            <div>
-              <Controller
-                name="organizer.id"
-                control={control}
-                render={({ field }) => (
-                  <Select
-                    {...field}
-                    options={organizerOptions}
-                    placeholder="Selecione um organizador"
-                    value={
-                      organizerOptions.find(
-                        (option) => option.value === field?.value
-                      )?.value || ""
-                    }
-                    onChange={(value) => field.onChange(value)}
-                  />
-                )}
-              />
-              {errors.organizer && (
-                <p className="text-orange-500 text-sm">
-                  {errors.organizer.message}
-                </p>
-              )}
-            </div>
-          </>
-        )}
-
-        {step === 1 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <>
-              <div>
-                <CustomDateTimePicker
-                  name="startDatetime"
-                  control={control}
-                  placeholder="Data e hora de início"
-                />
-                {errors.startDatetime && (
-                  <p className="text-orange-500 text-sm">
-                    {errors.startDatetime.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <CustomDateTimePicker
-                  name="endDatetime"
-                  control={control}
-                  placeholder="Data e hora de término"
-                />
-                {errors.endDatetime && (
-                  <p className="text-orange-500 text-sm">
-                    {errors.endDatetime.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <CustomDatePicker
-                  name="registrationStartDate"
-                  control={control}
-                  placeholder="Início das inscrições"
-                  withTime={false}
-                />
-                {errors.registrationStartDate && (
-                  <p className="text-orange-500 text-sm">
-                    {errors.registrationStartDate.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <CustomDatePicker
-                  name="registrationDeadline"
-                  control={control}
-                  placeholder="Término das inscrições"
-                  withTime={false}
-                />
-                {errors.registrationDeadline && (
-                  <p className="text-orange-500 text-sm">
-                    {errors.registrationDeadline.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <CustomDatePicker
-                  name="finalDatePayment"
-                  control={control}
-                  placeholder="Data limite para pagamento"
-                  withTime={false}
-                />
-                {errors.finalDatePayment && (
-                  <p className="text-orange-500 text-sm">
-                    {errors.finalDatePayment.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <Input
-                  type="number"
-                  placeholder="Capacidade do evento"
-                  {...register("capacity", { valueAsNumber: true })}
-                />
-                {errors.capacity && (
-                  <p className="text-orange-500 text-sm">
-                    {errors.capacity.message}
-                  </p>
-                )}
-              </div>
-            </>
-          </div>
-        )}
-
-        {step === 2 && (
-          <>
-            <div className="space-y-4">
-              <Controller
-                name="isFree"
-                control={control}
-                render={({ field }) => (
-                  <CustomToggle
-                    id="isFree"
-                    label="Evento é gratuito?"
-                    checked={!!field.value}
-                    onChange={field.onChange}
-                  />
-                )}
-              />
-            </div>
-
-            {!methods.watch("isFree") && (
-              <div className="max-h-[400px] overflow-y-auto space-y-4 border rounded-md p-4">
-                <BatchList />
-                {errors.batches && (
-                  <p className="text-orange-500 text-sm">
-                    {errors.batches.message}
-                  </p>
-                )}
-              </div>
-            )}
-          </>
-        )}
-
-        {step === 3 && (
-          <>
-            <div className="space-y-4">
-              <Controller
-                name="hasTransport"
-                control={control}
-                render={({ field }) => (
-                  <CustomToggle
-                    id="hasTransport"
-                    label="Fornecer transporte?"
-                    checked={!!field.value}
-                    onChange={field.onChange}
-                  />
-                )}
-              />
-
-              <Controller
-                name="termIsRequired"
-                control={control}
-                render={({ field }) => (
-                  <CustomToggle
-                    id="termIsRequired"
-                    label="Exigir termo pastoral?"
-                    checked={!!field.value}
-                    onChange={field.onChange}
-                  />
-                )}
-              />
-
-              <Controller
-                name="isPublished"
-                control={control}
-                render={({ field }) => (
-                  <CustomToggle
-                    id="isPublished"
-                    label="Publicar evento?"
-                    checked={!!field.value}
-                    onChange={field.onChange}
-                  />
-                )}
-              />
-            </div>
-          </>
-        )}
-
-        {/* Botões de navegação */}
-        <div className="flex gap-3 justify-between pt-4">
-          {step > 0 && (
-            <Button
-              className="w-full py-3 px-4 rounded-lg text-white bg-gradient-to-r from-orange-500 to-red-600 hover:bg-gradient-to-l transition-colors duration-300"
-              type="button"
-              variant="outline"
-              onClick={prevStep}
-            >
-              Voltar
-            </Button>
-          )}
-          {step <= 2 && (
-            <Button
-              className="w-full py-3 px-4 rounded-lg text-white bg-gradient-to-r from-orange-500 to-red-600 hover:bg-gradient-to-l transition-colors duration-300"
-              type="button"
-              onClick={nextStep}
-            >
-              Próximo
-            </Button>
-          )}
-          {step === 3 && (
-            <Button
-              className="w-full py-3 px-4 rounded-lg text-white bg-gradient-to-r from-orange-500 to-red-600 hover:bg-gradient-to-l transition-colors duration-300"
-              type="submit"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <div className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Salvando...
+      <div className="space-y-6">
+        {/* Progress Steps */}
+        <div className="flex justify-between items-center mb-8">
+          {steps.map((stepInfo, index) => {
+            const StepIcon = stepInfo.icon;
+            return (
+              <div key={index} className="flex items-center flex-1">
+                <div className={`flex items-center gap-3 ${index <= step ? 'text-orange-400' : 'text-neutral-500'}`}>
+                  <div className={`p-2 rounded-full border-2 ${
+                    index < step 
+                      ? 'bg-orange-600 border-orange-600 text-white' 
+                      : index === step 
+                      ? 'bg-orange-600/20 border-orange-400 text-orange-400'
+                      : 'bg-transparent border-neutral-600 text-neutral-500'
+                  }`}>
+                    <StepIcon className="h-4 w-4" />
+                  </div>
+                  <div className="hidden sm:block">
+                    <p className="text-sm font-medium">{stepInfo.title}</p>
+                    <p className="text-xs text-neutral-400">{stepInfo.description}</p>
+                  </div>
                 </div>
-              ) : (
-                "Salvar"
+                {index < steps.length - 1 && (
+                  <div className={`flex-1 h-0.5 mx-4 ${
+                    index < step ? 'bg-orange-600' : 'bg-neutral-600'
+                  }`} />
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <Card className="p-8 bg-gradient-to-br from-[#222222] via-[#2b2b2b] to-[#1e1e1e] border border-neutral-700 shadow-xl">
+            <div className="space-y-6">
+              <div className="flex items-center gap-3 pb-4 border-b border-neutral-700">
+                {React.createElement(steps[step].icon, { className: "h-5 w-5 text-orange-400" })}
+                <h2 className="text-xl font-semibold text-orange-300">
+                  {steps[step].title}
+                </h2>
+              </div>
+
+              {step === 0 && (
+                <div className="space-y-6">
+                  {/* Nome do Evento */}
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-sm font-medium text-orange-300">
+                      <Tag className="h-4 w-4" />
+                      Nome do Evento *
+                    </label>
+                    <Input 
+                      placeholder="Digite o nome do evento..."
+                      {...register("name")}
+                      className="bg-neutral-800 border-neutral-600 text-white placeholder-neutral-400 focus:border-orange-500 focus:ring-orange-500/20"
+                    />
+                    {errors.name && (
+                      <p className="text-red-400 text-sm flex items-center gap-1">
+                        <X className="h-3 w-3" />
+                        {errors.name.message}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Descrição */}
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-sm font-medium text-orange-300">
+                      <FileText className="h-4 w-4" />
+                      Descrição do Evento *
+                    </label>
+                    <Input
+                      placeholder="Descreva o evento..."
+                      {...register("description")}
+                      className="bg-neutral-800 border-neutral-600 text-white placeholder-neutral-400 focus:border-orange-500 focus:ring-orange-500/20"
+                    />
+                    {errors.description && (
+                      <p className="text-red-400 text-sm flex items-center gap-1">
+                        <X className="h-3 w-3" />
+                        {errors.description.message}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Local */}
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-sm font-medium text-orange-300">
+                      <MapPin className="h-4 w-4" />
+                      Local do Evento *
+                    </label>
+                    <Input 
+                      placeholder="Informe o local do evento..."
+                      {...register("location")}
+                      className="bg-neutral-800 border-neutral-600 text-white placeholder-neutral-400 focus:border-orange-500 focus:ring-orange-500/20"
+                    />
+                    {errors.location && (
+                      <p className="text-red-400 text-sm flex items-center gap-1">
+                        <X className="h-3 w-3" />
+                        {errors.location.message}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Tipo de Evento */}
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-sm font-medium text-orange-300">
+                      <Tag className="h-4 w-4" />
+                      Tipo de Evento *
+                    </label>
+                    <Controller
+                      name="type"
+                      control={control}
+                      render={({ field }) => (
+                        <Select
+                          {...field}
+                          options={eventTypes}
+                          placeholder="Selecione o tipo de evento"
+                          value={field.value}
+                        />
+                      )}
+                    />
+                    {errors.type && (
+                      <p className="text-red-400 text-sm flex items-center gap-1">
+                        <X className="h-3 w-3" />
+                        {errors.type.message}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Organizador */}
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-sm font-medium text-orange-300">
+                      <Users className="h-4 w-4" />
+                      Organizador Responsável *
+                    </label>
+                    <Controller
+                      name="organizer.id"
+                      control={control}
+                      render={({ field }) => (
+                        <Select
+                          {...field}
+                          options={organizerOptions}
+                          placeholder="Selecione um organizador"
+                          value={
+                            organizerOptions.find(
+                              (option) => option.value === field?.value
+                            )?.value || ""
+                          }
+                          onChange={(value) => field.onChange(value)}
+                        />
+                      )}
+                    />
+                    {errors.organizer && (
+                      <p className="text-red-400 text-sm flex items-center gap-1">
+                        <X className="h-3 w-3" />
+                        {errors.organizer.message}
+                      </p>
+                    )}
+                  </div>
+                </div>
               )}
-            </Button>
-          )}
-        </div>
-        <div className="flex justify-center mt-6 text-sm w-full">
-          <Link href="/events" className="text-orange-500 hover:underline">
-            Cancelar
-          </Link>
-        </div>
-      </form>
+
+              {step === 1 && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Data e Hora de Início */}
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-2 text-sm font-medium text-orange-300">
+                        <Clock className="h-4 w-4" />
+                        Data e Hora de Início *
+                      </label>
+                      <CustomDateTimePicker
+                        name="startDatetime"
+                        control={control}
+                        placeholder="Selecione data e hora de início"
+                      />
+                      {errors.startDatetime && (
+                        <p className="text-red-400 text-sm flex items-center gap-1">
+                          <X className="h-3 w-3" />
+                          {errors.startDatetime.message}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Data e Hora de Término */}
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-2 text-sm font-medium text-orange-300">
+                        <Clock className="h-4 w-4" />
+                        Data e Hora de Término *
+                      </label>
+                      <CustomDateTimePicker
+                        name="endDatetime"
+                        control={control}
+                        placeholder="Selecione data e hora de término"
+                      />
+                      {errors.endDatetime && (
+                        <p className="text-red-400 text-sm flex items-center gap-1">
+                          <X className="h-3 w-3" />
+                          {errors.endDatetime.message}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Início das Inscrições */}
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-2 text-sm font-medium text-orange-300">
+                        <Calendar className="h-4 w-4" />
+                        Início das Inscrições *
+                      </label>
+                      <CustomDatePicker
+                        name="registrationStartDate"
+                        control={control}
+                        placeholder="Data de início das inscrições"
+                        withTime={false}
+                      />
+                      {errors.registrationStartDate && (
+                        <p className="text-red-400 text-sm flex items-center gap-1">
+                          <X className="h-3 w-3" />
+                          {errors.registrationStartDate.message}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Término das Inscrições */}
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-2 text-sm font-medium text-orange-300">
+                        <Calendar className="h-4 w-4" />
+                        Término das Inscrições *
+                      </label>
+                      <CustomDatePicker
+                        name="registrationDeadline"
+                        control={control}
+                        placeholder="Data limite para inscrições"
+                        withTime={false}
+                      />
+                      {errors.registrationDeadline && (
+                        <p className="text-red-400 text-sm flex items-center gap-1">
+                          <X className="h-3 w-3" />
+                          {errors.registrationDeadline.message}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Data Limite para Pagamento */}
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-2 text-sm font-medium text-orange-300">
+                        <DollarSign className="h-4 w-4" />
+                        Limite para Pagamento
+                      </label>
+                      <CustomDatePicker
+                        name="finalDatePayment"
+                        control={control}
+                        placeholder="Data limite para pagamento (opcional)"
+                        withTime={false}
+                      />
+                      {errors.finalDatePayment && (
+                        <p className="text-red-400 text-sm flex items-center gap-1">
+                          <X className="h-3 w-3" />
+                          {errors.finalDatePayment.message}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Capacidade */}
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-2 text-sm font-medium text-orange-300">
+                        <Users className="h-4 w-4" />
+                        Capacidade do Evento *
+                      </label>
+                      <Input
+                        type="number"
+                        placeholder="Ex: 100"
+                        {...register("capacity", { valueAsNumber: true })}
+                        className="bg-neutral-800 border-neutral-600 text-white placeholder-neutral-400 focus:border-orange-500 focus:ring-orange-500/20"
+                      />
+                      {errors.capacity && (
+                        <p className="text-red-400 text-sm flex items-center gap-1">
+                          <X className="h-3 w-3" />
+                          {errors.capacity.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {step === 2 && (
+                <div className="space-y-6">
+                  {/* Evento Gratuito Toggle */}
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-sm font-medium text-orange-300">
+                      <DollarSign className="h-4 w-4" />
+                      Configuração de Preço
+                    </label>
+                    <Controller
+                      name="isFree"
+                      control={control}
+                      render={({ field }) => (
+                        <CustomToggle
+                          id="isFree"
+                          label="Evento é gratuito?"
+                          checked={!!field.value}
+                          onChange={field.onChange}
+                        />
+                      )}
+                    />
+                  </div>
+
+                  {/* Lotes - mostrar apenas se não for gratuito */}
+                  {!methods.watch("isFree") && (
+                    <div className="space-y-4">
+                      <div className="border-t border-neutral-700 pt-4">
+                        <h3 className="text-lg font-medium text-orange-300 mb-4">
+                          Configuração de Lotes
+                        </h3>
+                        <div className="max-h-[400px] overflow-y-auto space-y-4 border border-neutral-600 rounded-lg p-4 bg-neutral-800/50">
+                          <BatchList />
+                          {errors.batches && (
+                            <p className="text-red-400 text-sm flex items-center gap-1">
+                              <X className="h-3 w-3" />
+                              {errors.batches.message}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Informação sobre evento gratuito */}
+                  {methods.watch("isFree") && (
+                    <div className="bg-green-600/10 border border-green-600/30 rounded-lg p-4">
+                      <p className="text-green-400 text-sm flex items-center gap-2">
+                        <Info className="h-4 w-4" />
+                        Este evento será gratuito. Não é necessário configurar lotes de pagamento.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {step === 3 && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 gap-6">
+                    {/* Transporte */}
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-2 text-sm font-medium text-orange-300">
+                        <Settings className="h-4 w-4" />
+                        Opções de Transporte
+                      </label>
+                      <div className="bg-neutral-800/50 border border-neutral-600 rounded-lg p-4">
+                        <Controller
+                          name="hasTransport"
+                          control={control}
+                          render={({ field }) => (
+                            <CustomToggle
+                              id="hasTransport"
+                              label="Fornecer transporte para o evento?"
+                              checked={!!field.value}
+                              onChange={field.onChange}
+                            />
+                          )}
+                        />
+                        <p className="text-xs text-neutral-400 mt-2">
+                          Marque esta opção se o evento incluir transporte para os participantes.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Termo Pastoral */}
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-2 text-sm font-medium text-orange-300">
+                        <FileText className="h-4 w-4" />
+                        Requisitos de Inscrição
+                      </label>
+                      <div className="bg-neutral-800/50 border border-neutral-600 rounded-lg p-4">
+                        <Controller
+                          name="termIsRequired"
+                          control={control}
+                          render={({ field }) => (
+                            <CustomToggle
+                              id="termIsRequired"
+                              label="Exigir termo pastoral para inscrição?"
+                              checked={!!field.value}
+                              onChange={field.onChange}
+                            />
+                          )}
+                        />
+                        <p className="text-xs text-neutral-400 mt-2">
+                          Marque para exigir um termo pastoral assinado durante a inscrição.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Publicação */}
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-2 text-sm font-medium text-orange-300">
+                        <Settings className="h-4 w-4" />
+                        Status de Publicação
+                      </label>
+                      <div className="bg-neutral-800/50 border border-neutral-600 rounded-lg p-4">
+                        <Controller
+                          name="isPublished"
+                          control={control}
+                          render={({ field }) => (
+                            <CustomToggle
+                              id="isPublished"
+                              label="Publicar evento imediatamente?"
+                              checked={!!field.value}
+                              onChange={field.onChange}
+                            />
+                          )}
+                        />
+                        <p className="text-xs text-neutral-400 mt-2">
+                          {methods.watch("isPublished") 
+                            ? "O evento ficará visível e disponível para inscrições."
+                            : "O evento será salvo como rascunho e não ficará visível publicamente."
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+
+            </div>
+          </Card>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            {step > 0 && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={prevStep}
+                className="flex-1 bg-transparent hover:bg-neutral-700/50 text-neutral-300 hover:text-white border border-neutral-600 hover:border-neutral-500 font-medium py-3 px-6 rounded-lg transition-all duration-200"
+              >
+                <ChevronLeft className="h-4 w-4 mr-2" />
+                Voltar
+              </Button>
+            )}
+            
+            {step < 3 ? (
+              <Button
+                type="button"
+                onClick={nextStep}
+                className="flex-1 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white font-medium py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
+              >
+                Próximo
+                <ChevronRight className="h-4 w-4 ml-2" />
+              </Button>
+            ) : (
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex-1 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white font-medium py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Salvando...
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center gap-2">
+                    <Save className="h-4 w-4" />
+                    Salvar Evento
+                  </div>
+                )}
+              </Button>
+            )}
+          </div>
+
+          {/* Help Text */}
+          <div className="text-center">
+            <p className="text-xs text-neutral-400">
+              * Campos obrigatórios. Todos os dados serão validados antes do salvamento.
+            </p>
+            <Link 
+              href="/events/list" 
+              className="text-orange-400 hover:text-orange-300 underline text-sm mt-2 inline-block"
+            >
+              Cancelar e voltar para a lista
+            </Link>
+          </div>
+        </form>
+      </div>
     </FormProvider>
   );
 }
