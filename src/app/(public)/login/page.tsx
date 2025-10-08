@@ -56,14 +56,15 @@ export default function LoginPage() {
           />
           <Button
             onClick={handleLogin}
-            className="w-full py-3 px-4 rounded-lg text-white bg-gradient-to-r from-orange-500 to-red-600 hover:bg-gradient-to-l transition-colors duration-300"
-            disabled={isLoading} // 👈 botão desabilitado se loading
+            size="lg"
+            className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-medium transition-all duration-300"
+            disabled={isLoading}
           >
             {isLoading ? (
-              <div className="flex items-center justify-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 Entrando...
-              </div>
+              </>
             ) : (
               "Entrar"
             )}
