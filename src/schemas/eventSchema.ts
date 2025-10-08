@@ -19,7 +19,9 @@ const organizer = z.object({
 
 export const eventSchema = z.object({
   name: z.string().min(1, "O nome é obrigatório."),
-  description: z.string().optional(),
+  description: z.string()
+    .min(1, "A descrição é obrigatória.")
+    .max(500, "A descrição deve ter no máximo 500 caracteres."),
   location: z.string().min(1, "A localização é obrigatória."),
   type: z.enum(
     [

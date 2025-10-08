@@ -18,31 +18,23 @@ export function CustomDatePicker({
   withTime = false
 }: CustomDatePickerProps) {
   return (
-    <div className="flex flex-col gap-1 w-full">
-      {label && (
-        <label htmlFor={name} className="text-gray-700 font-medium">
-          {label}
-        </label>
+    <Controller
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <DatePicker
+          id={name}
+          placeholderText={placeholder}
+          selected={field.value}
+          onChange={field.onChange}
+          showTimeSelect={withTime}
+          dateFormat={withTime ? "dd/MM/yyyy HH:mm" : "dd/MM/yyyy"}
+          timeFormat="HH:mm"
+          timeIntervals={15}
+          wrapperClassName="w-full"
+          className="flex h-10 w-full rounded-md border border-neutral-600 bg-neutral-800 px-3 py-2 text-sm text-white placeholder-neutral-400 ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/20 focus-visible:ring-offset-2 focus-visible:border-orange-500 disabled:cursor-not-allowed disabled:opacity-50"
+        />
       )}
-
-      <Controller
-        control={control}
-        name={name}
-        render={({ field }) => (
-            <DatePicker
-              id={name}
-              placeholderText={placeholder}
-              selected={field.value}
-              onChange={field.onChange}
-              showTimeSelect={withTime}
-              dateFormat={withTime ? "dd/MM/yyyy HH:mm" : "dd/MM/yyyy"}
-              timeFormat="HH:mm"
-              timeIntervals={15}
-              wrapperClassName="w-full" // <- força largura no wrapper
-              className="border border-gray-300 text-orange-600 rounded-lg px-3 py-2 w-full"
-            />
-        )}
-      />
-    </div>
+    />
   )
 }

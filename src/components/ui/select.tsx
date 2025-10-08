@@ -24,8 +24,20 @@ export const Select: React.FC<SelectProps> = ({ options, value, defaultValue, on
     <select
       value={value ?? defaultValue}
       onChange={(e) => onChange(e.target.value)}
-      className={`border rounded-lg p-2 w-full focus:ring focus:ring-orange-400 
-        ${isPlaceholderSelected ? "text-gray-400" : "text-orange-600"} ${className}`}
+      className={`
+        flex h-10 w-full rounded-md border border-neutral-600 bg-neutral-800 px-3 py-2 text-sm text-white 
+        placeholder-neutral-400 ring-offset-background file:border-0 file:bg-transparent file:text-sm 
+        file:font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/20 
+        focus-visible:ring-offset-2 focus-visible:border-orange-500 disabled:cursor-not-allowed 
+        disabled:opacity-50 appearance-none bg-no-repeat bg-right pr-8
+        ${isPlaceholderSelected ? "text-neutral-400" : "text-white"} 
+        ${className}
+      `}
+      style={{
+        backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a3a3a3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'/%3e%3c/svg%3e")`,
+        backgroundSize: '16px',
+        backgroundPosition: 'right 8px center'
+      }}
     >
       {placeholder && (
         <option value="" disabled>
@@ -33,7 +45,7 @@ export const Select: React.FC<SelectProps> = ({ options, value, defaultValue, on
         </option>
       )}
       {options.map((option) => (
-        <option key={option.value} value={option.value} className="text-orange-600">
+        <option key={option.value} value={option.value} className="bg-neutral-800 text-white">
           {option.label}
         </option>
       ))}
@@ -71,14 +83,24 @@ export const SelectRoot = ({ children }: { children: React.ReactNode }) => {
 };
 
 export const SelectTrigger = ({ placeholder }: { placeholder?: string }) => {
-  const { selected, setIsOpen } = useSelectContext();
+  const { selected, isOpen, setIsOpen } = useSelectContext();
 
   return (
     <button
-      onClick={() => setIsOpen((prev) => !prev)}
-      className="w-full border rounded-lg p-2 text-left text-orange-600 bg-white focus:ring focus:ring-orange-400"
+      onClick={() => setIsOpen(!isOpen)}
+      className="flex h-10 w-full items-center justify-between rounded-md border border-neutral-600 bg-neutral-800 px-3 py-2 text-sm text-white placeholder-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/20 focus-visible:ring-offset-2 focus-visible:border-orange-500"
     >
-      {selected || <span className="text-gray-400">{placeholder ?? "Selecione"}</span>}
+      <span className={selected ? "text-white" : "text-neutral-400"}>
+        {selected || placeholder || "Selecione..."}
+      </span>
+      <svg 
+        className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+        fill="none" 
+        stroke="currentColor" 
+        viewBox="0 0 24 24"
+      >
+        <polyline points="6,9 12,15 18,9" />
+      </svg>
     </button>
   );
 };
@@ -89,7 +111,7 @@ export const SelectContent = ({ children }: { children: React.ReactNode }) => {
   if (!isOpen) return null;
 
   return (
-    <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+    <ul className="absolute z-50 mt-1 w-full bg-neutral-800 border border-neutral-600 rounded-md shadow-lg max-h-60 overflow-auto">
       {children}
     </ul>
   );
@@ -106,7 +128,7 @@ export const SelectItem = ({ value, children }: { value: string; children: React
   return (
     <li
       onClick={handleSelect}
-      className="px-4 py-2 cursor-pointer hover:bg-orange-100 text-orange-600"
+      className="px-3 py-2 cursor-pointer hover:bg-neutral-700 text-white text-sm transition-colors"
     >
       {children}
     </li>

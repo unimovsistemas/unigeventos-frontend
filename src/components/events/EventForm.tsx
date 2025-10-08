@@ -4,6 +4,7 @@ import React from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/text-area";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { 
@@ -20,7 +21,8 @@ import {
   ChevronRight,
   Save,
   X,
-  Info
+  Info,
+  Smile
 } from "lucide-react";
 import { EventFormData, eventSchema } from "@/schemas/eventSchema";
 import Select from "../ui/select";
@@ -31,6 +33,7 @@ import { BatchList } from "./BatchList";
 import Link from "next/link";
 import { OrganizerResponse } from "@/services/organizersService";
 import { Card } from "@/components/ui/card";
+import "../../styles/datepicker.css";
 
 interface EventFormProps {
   onSubmit: (data: EventFormData) => void;
@@ -113,23 +116,28 @@ export function EventForm({
     let fieldsToValidate: (keyof EventFormData)[] = [];
 
     if (step === 0) {
-      fieldsToValidate = ["name", "description", "location", "type"];
+      fieldsToValidate = ["name", "description", "location", "type", "organizer"];
     } else if (step === 1) {
       fieldsToValidate = [
         "startDatetime",
         "endDatetime",
         "registrationStartDate",
         "registrationDeadline",
-        "finalDatePayment",
         "capacity",
       ];
     } else if (step === 2) {
-      await trigger("batches");
-      fieldsToValidate = ["batches"];
+      // Para lotes, só validar se não for gratuito
+      const isFree = methods.watch("isFree");
+      if (!isFree) {
+        await trigger("batches");
+        fieldsToValidate = ["batches"];
+      }
     }
 
     const valid = await trigger(fieldsToValidate);
-    if (valid) setStep((s) => s + 1);
+    if (valid && step < 3) {
+      setStep((s) => s + 1);
+    }
   };
 
   const prevStep = () => setStep((s) => s - 1);
@@ -202,14 +210,30 @@ export function EventForm({
                   {/* Descrição */}
                   <div className="space-y-2">
                     <label className="flex items-center gap-2 text-sm font-medium text-orange-300">
-                      <FileText className="h-4 w-4" />
+                      <Smile className="h-4 w-4" />
                       Descrição do Evento *
                     </label>
-                    <Input
-                      placeholder="Descreva o evento..."
+                    <Textarea
+                      placeholder="📝 Descreva seu evento de forma atrativa! Use emojis para tornar mais interessante... 
+
+🎯 Exemplo: 
+✨ Prepare-se para uma experiência transformadora! 
+🙏 Momento de adoração e comunhão
+🎵 Louvor especial com convidados
+🍽️ Coffee break incluído
+📍 Local: Auditório Principal"
                       {...register("description")}
-                      className="bg-neutral-800 border-neutral-600 text-white placeholder-neutral-400 focus:border-orange-500 focus:ring-orange-500/20"
+                      className="min-h-[120px] bg-neutral-800 border-neutral-600 text-white placeholder-neutral-400 focus:border-orange-500 focus:ring-orange-500/20"
+                      rows={6}
                     />
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-neutral-500">
+                        💡 Dica: Use emojis e quebras de linha para tornar a descrição mais atrativa
+                      </p>
+                      <p className="text-xs text-neutral-500">
+                        {(methods.watch("description")?.length || 0)}/500 caracteres
+                      </p>
+                    </div>
                     {errors.description && (
                       <p className="text-red-400 text-sm flex items-center gap-1">
                         <X className="h-3 w-3" />
@@ -406,8 +430,15 @@ export function EventForm({
                       <Input
                         type="number"
                         placeholder="Ex: 100"
-                        {...register("capacity", { valueAsNumber: true })}
-                        className="bg-neutral-800 border-neutral-600 text-white placeholder-neutral-400 focus:border-orange-500 focus:ring-orange-500/20"
+                        min="1"
+                        max="10000"
+                        {...register("capacity", { 
+                          valueAsNumber: true,
+                          required: "Capacidade é obrigatória",
+                          min: { value: 1, message: "Capacidade deve ser pelo menos 1" },
+                          max: { value: 10000, message: "Capacidade não pode exceder 10.000" }
+                        })}
+                        className="bg-neutral-800 border-neutral-600 text-white placeholder-neutral-400 focus:border-orange-500 focus:ring-orange-500/20 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                       {errors.capacity && (
                         <p className="text-red-400 text-sm flex items-center gap-1">
@@ -476,83 +507,77 @@ export function EventForm({
 
               {step === 3 && (
                 <div className="space-y-6">
-                  <div className="grid grid-cols-1 gap-6">
-                    {/* Transporte */}
-                    <div className="space-y-2">
-                      <label className="flex items-center gap-2 text-sm font-medium text-orange-300">
-                        <Settings className="h-4 w-4" />
-                        Opções de Transporte
-                      </label>
-                      <div className="bg-neutral-800/50 border border-neutral-600 rounded-lg p-4">
-                        <Controller
-                          name="hasTransport"
-                          control={control}
-                          render={({ field }) => (
-                            <CustomToggle
-                              id="hasTransport"
-                              label="Fornecer transporte para o evento?"
-                              checked={!!field.value}
-                              onChange={field.onChange}
-                            />
-                          )}
-                        />
-                        <p className="text-xs text-neutral-400 mt-2">
-                          Marque esta opção se o evento incluir transporte para os participantes.
-                        </p>
-                      </div>
+                  {/* Transporte */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-sm font-medium text-orange-300 mb-2">
+                      <Settings className="h-4 w-4" />
+                      Opções de Transporte
                     </div>
-
-                    {/* Termo Pastoral */}
-                    <div className="space-y-2">
-                      <label className="flex items-center gap-2 text-sm font-medium text-orange-300">
-                        <FileText className="h-4 w-4" />
-                        Requisitos de Inscrição
-                      </label>
-                      <div className="bg-neutral-800/50 border border-neutral-600 rounded-lg p-4">
-                        <Controller
-                          name="termIsRequired"
-                          control={control}
-                          render={({ field }) => (
-                            <CustomToggle
-                              id="termIsRequired"
-                              label="Exigir termo pastoral para inscrição?"
-                              checked={!!field.value}
-                              onChange={field.onChange}
-                            />
-                          )}
+                    <Controller
+                      name="hasTransport"
+                      control={control}
+                      render={({ field }) => (
+                        <CustomToggle
+                          id="hasTransport"
+                          label="Fornecer transporte para o evento?"
+                          checked={!!field.value}
+                          onChange={field.onChange}
                         />
-                        <p className="text-xs text-neutral-400 mt-2">
-                          Marque para exigir um termo pastoral assinado durante a inscrição.
-                        </p>
-                      </div>
+                      )}
+                    />
+                    <p className="text-xs text-neutral-400 px-3">
+                      💡 Marque esta opção se o evento incluir transporte para os participantes.
+                    </p>
+                  </div>
+
+                  {/* Termo Pastoral */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-sm font-medium text-orange-300 mb-2">
+                      <FileText className="h-4 w-4" />
+                      Requisitos de Inscrição
                     </div>
-
-                    {/* Publicação */}
-                    <div className="space-y-2">
-                      <label className="flex items-center gap-2 text-sm font-medium text-orange-300">
-                        <Settings className="h-4 w-4" />
-                        Status de Publicação
-                      </label>
-                      <div className="bg-neutral-800/50 border border-neutral-600 rounded-lg p-4">
-                        <Controller
-                          name="isPublished"
-                          control={control}
-                          render={({ field }) => (
-                            <CustomToggle
-                              id="isPublished"
-                              label="Publicar evento imediatamente?"
-                              checked={!!field.value}
-                              onChange={field.onChange}
-                            />
-                          )}
+                    <Controller
+                      name="termIsRequired"
+                      control={control}
+                      render={({ field }) => (
+                        <CustomToggle
+                          id="termIsRequired"
+                          label="Exigir termo pastoral para inscrição?"
+                          checked={!!field.value}
+                          onChange={field.onChange}
                         />
-                        <p className="text-xs text-neutral-400 mt-2">
-                          {methods.watch("isPublished") 
-                            ? "O evento ficará visível e disponível para inscrições."
-                            : "O evento será salvo como rascunho e não ficará visível publicamente."
-                          }
-                        </p>
-                      </div>
+                      )}
+                    />
+                    <p className="text-xs text-neutral-400 px-3">
+                      📋 Marque para exigir um termo pastoral assinado durante a inscrição.
+                    </p>
+                  </div>
+
+                  {/* Publicação */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-sm font-medium text-orange-300 mb-2">
+                      <Settings className="h-4 w-4" />
+                      Status de Publicação
+                    </div>
+                    <Controller
+                      name="isPublished"
+                      control={control}
+                      render={({ field }) => (
+                        <CustomToggle
+                          id="isPublished"
+                          label="Publicar evento imediatamente?"
+                          checked={!!field.value}
+                          onChange={field.onChange}
+                        />
+                      )}
+                    />
+                    <div className={`text-xs px-3 transition-colors ${
+                      methods.watch("isPublished") ? "text-green-400" : "text-yellow-400"
+                    }`}>
+                      {methods.watch("isPublished") 
+                        ? "✅ O evento ficará visível e disponível para inscrições públicas."
+                        : "⏸️ O evento será salvo como rascunho e não ficará visível publicamente."
+                      }
                     </div>
                   </div>
                 </div>
