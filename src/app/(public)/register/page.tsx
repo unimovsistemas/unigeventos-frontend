@@ -3,6 +3,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Input } from "@components/ui/input";
 import { Button } from "@components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@components/ui/card";
@@ -34,6 +35,8 @@ export default function RegisterPage() {
   const [successMessage, setSuccessMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get('redirect');
 
   const formatCPF = (value: string) => {
     return value
@@ -46,7 +49,8 @@ export default function RegisterPage() {
   const handleCancelRegister = async () => {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
-    router.push("/login");
+    const targetUrl = redirectUrl ? `/login?redirect=${encodeURIComponent(redirectUrl)}` : "/login";
+    router.push(targetUrl);
     setIsLoading(false);
   };
 
@@ -121,7 +125,8 @@ export default function RegisterPage() {
       setSuccessMessage(
         "Cadastro finalizado com sucesso! Um e-mail de boas-vindas foi enviado."
       );
-      router.push("/login");
+      const targetUrl = redirectUrl ? `/login?redirect=${encodeURIComponent(redirectUrl)}` : "/login";
+      router.push(targetUrl);
     } catch (err: any) {
       setError(`Erro: ${err.message}`);
     } finally {

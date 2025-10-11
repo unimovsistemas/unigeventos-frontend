@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Input } from "@components/ui/input";
 import { Button } from "@components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@components/ui/card";
@@ -12,15 +13,20 @@ export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false); // 👈 novo estado
+  const [isLoading, setIsLoading] = useState(false);
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get('redirect');
 
   const handleLogin = async () => {
-    setIsLoading(true); // 👈 ativa o loading
+    setIsLoading(true);
     try {
       const response = await login(username, password);
       localStorage.setItem("accessToken", response.accessToken);
       localStorage.setItem("refreshToken", response.refreshToken);
-      window.location.href = "/dashboard";
+      
+      // Redireciona para a URL especificada ou para o dashboard
+      const targetUrl = redirectUrl || "/dashboard";
+      window.location.href = targetUrl;
     } catch (err: any) {
       const hasCausedBy = err.response != null && err.response.data != null;
       const errorMessage = hasCausedBy
@@ -28,7 +34,7 @@ export default function LoginPage() {
         : "Ocorreu um erro inesperado! Entre em contato com o administrador do sistema!";
       setError(`${errorMessage}`);
     } finally {
-      setIsLoading(false); // 👈 desativa o loading
+      setIsLoading(false);
     }
   };
 
@@ -40,6 +46,13 @@ export default function LoginPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {redirectUrl && (
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-center">
+              <p className="text-orange-700 text-sm">
+                Faça login para continuar com sua inscrição no evento
+              </p>
+            </div>
+          )}
           {error && (
             <p className="text-red-600 text-sm text-center mb-3">{error}</p>
           )}
@@ -76,7 +89,10 @@ export default function LoginPage() {
             >
               Esqueci a senha
             </a>
-            <a href="/register" className="text-orange-500 hover:underline">
+            <a 
+              href={redirectUrl ? `/register?redirect=${encodeURIComponent(redirectUrl)}` : "/register"} 
+              className="text-orange-500 hover:underline"
+            >
               Criar conta
             </a>
           </div>
