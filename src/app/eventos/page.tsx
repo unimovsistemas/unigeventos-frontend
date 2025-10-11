@@ -22,6 +22,9 @@ export default function EventosPage() {
 
   const pageSize = 9; // 3x3 grid
 
+  // Utility function to safely get events array
+  const safeEvents = Array.isArray(events) ? events : [];
+
   const fetchEvents = async (page: number = 0, search: string = '') => {
     try {
       setLoading(true);
@@ -34,9 +37,11 @@ export default function EventosPage() {
         pageSize
       );
       
-      setEvents(response);
-      setTotalElements(response.length);
-      setTotalPages(Math.ceil(response.length / pageSize));
+      // Garantir que response seja sempre um array
+      const eventsArray = Array.isArray(response) ? response : [];
+      setEvents(eventsArray);
+      setTotalElements(eventsArray.length);
+      setTotalPages(Math.ceil(eventsArray.length / pageSize));
       setCurrentPage(page);
     } catch (err) {
       console.error('Erro ao carregar eventos:', err);
@@ -312,14 +317,14 @@ export default function EventosPage() {
           },
           { 
             icon: Filter, 
-            value: events.filter(e => !e.isFree).length, 
+            value: safeEvents.filter(e => !e.isFree).length, 
             label: "Eventos Pagos", 
             color: "purple",
             delay: 0.2
           },
           { 
             icon: Calendar, 
-            value: events.filter(e => e.isFree).length, 
+            value: safeEvents.filter(e => e.isFree).length, 
             label: "Eventos Gratuitos", 
             color: "green",
             delay: 0.3
@@ -413,14 +418,14 @@ export default function EventosPage() {
 
       {/* Events Grid */}
       <AnimatePresence>
-        {!loading && !error && events.length > 0 && (
+        {!loading && !error && safeEvents.length > 0 && (
           <motion.div 
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6 w-full max-w-full"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6 }}
           >
-            {events.map((event, index) => (
+            {safeEvents.map((event, index) => (
               <motion.div 
                 key={event.id} 
                 className="w-full max-w-full"
@@ -445,7 +450,7 @@ export default function EventosPage() {
       </AnimatePresence>
 
       {/* Empty State */}
-      {!loading && !error && events.length === 0 && (
+      {!loading && !error && safeEvents.length === 0 && (
         <div className="text-center py-16 bg-gray-50 rounded-xl border border-gray-200">
           <div className="text-gray-400 mb-6">
             <svg className="h-16 w-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -69,7 +69,7 @@ export function EventCard({ event, onRegister }: EventCardProps) {
   };
 
   const getLowestPrice = () => {
-    if (event.isFree || event.batches.length === 0) return null;
+    if (event.isFree || !event.batches || event.batches.length === 0) return null;
     const prices = event.batches.map(batch => batch.price);
     return Math.min(...prices);
   };
@@ -141,7 +141,7 @@ export function EventCard({ event, onRegister }: EventCardProps) {
               {event.name}
             </h3>
             <p className="text-xs sm:text-sm text-gray-600 mt-1 truncate">
-              Organizado por {event.organizer.name}
+              Organizado por {event.organizer?.name || 'Organizador não informado'}
             </p>
           </div>
           {lowestPrice !== null ? (

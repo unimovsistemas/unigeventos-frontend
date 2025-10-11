@@ -3,7 +3,7 @@
 import axios from "axios";
 import { EventDataResponse } from "./eventsService";
 
-const API_URL = "http://localhost:8001";
+const API_URL = "http://localhost:8001/rest/v1/events";
 
 export const getPublicEvents = async (
   searchTerm = "",
@@ -12,7 +12,7 @@ export const getPublicEvents = async (
 ): Promise<EventDataResponse[]> => {
   try {
     const response = await axios.get(
-      `${API_URL}/events/queries/published-events?page=${page}&size=${size}&search=${encodeURIComponent(searchTerm)}`,
+      `${API_URL}/queries/public/published-events?page=${page}&size=${size}&search=${encodeURIComponent(searchTerm)}`,
       {
         headers: {
           'Content-Type': 'application/json',
@@ -20,7 +20,28 @@ export const getPublicEvents = async (
       }
     );
 
-    return response.data;
+    // Garantir que sempre retorne um array
+    const data = response.data;
+    let events: EventDataResponse[] = [];
+    
+    if (Array.isArray(data)) {
+      events = data;
+    } else if (data && Array.isArray(data.content)) {
+      // Se a API retornar um objeto com paginação
+      events = data.content;
+    } else {
+      // Se não for array, retornar array vazio
+      return [];
+    }
+
+    // Garantir que cada evento tenha propriedades seguras
+    return events.map(event => ({
+      ...event,
+      organizer: event.organizer || { id: 'unknown', name: 'Organizador não informado' },
+      batches: event.batches || [],
+      description: event.description || '',
+      numberOfSubscribers: event.numberOfSubscribers || 0
+    }));
   } catch (error: any) {
     console.error('Erro ao buscar eventos públicos:', error);
     throw new Error(
@@ -40,7 +61,16 @@ export const getPublicEventById = async (
       },
     });
 
-    return response.data;
+    const event = response.data;
+    
+    // Garantir que o evento tenha propriedades seguras
+    return {
+      ...event,
+      organizer: event.organizer || { id: 'unknown', name: 'Organizador não informado' },
+      batches: event.batches || [],
+      description: event.description || '',
+      numberOfSubscribers: event.numberOfSubscribers || 0
+    };
   } catch (error: any) {
     throw new Error(
       error.response?.data?.message || "Erro ao buscar os dados do evento."

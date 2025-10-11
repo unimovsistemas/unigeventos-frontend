@@ -44,17 +44,17 @@ export interface EventData {
   termIsRequired: boolean;
   isFree: boolean;
   organizerId: string;
-  organizer: {
+  organizer?: {
     id: string;
   };
-  batches: Batch[];
+  batches?: Batch[];
 }
 
 export interface EventDataResponse extends EventData {
-  organizer: {
+  organizer?: {
     id: string;
     name: string;
-  }
+  };
   numberOfSubscribers: number;
 }
 
