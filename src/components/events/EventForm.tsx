@@ -76,6 +76,17 @@ export function EventForm({
   isSubmitting = false,
   organizers,
 }: EventFormProps) {
+  const [step, setStep] = useState(0);
+
+  // Função para salvar apenas quando explicitamente solicitado
+  const handleSave = async () => {
+    const isValid = await trigger(); // Valida todos os campos
+    if (isValid) {
+      const formData = methods.getValues();
+      onSubmit(formData);
+    }
+  };
+
   const methods = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
     defaultValues: {
@@ -96,7 +107,6 @@ export function EventForm({
     label: org.name,
   }));
 
-  const [step, setStep] = useState(0);
   const {
     register,
     handleSubmit,
@@ -112,7 +122,16 @@ export function EventForm({
     }
   }, [defaultValues, reset]);
 
-  const nextStep = async () => {
+  const nextStep = async (event: React.MouseEvent<HTMLButtonElement>) => {
+    // Previne qualquer submissão do formulário
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Verificação adicional - não fazer nada se já estiver no último step
+    if (step >= 3) {
+      return;
+    }
+
     let fieldsToValidate: (keyof EventFormData)[] = [];
 
     if (step === 0) {
@@ -135,12 +154,18 @@ export function EventForm({
     }
 
     const valid = await trigger(fieldsToValidate);
+    
     if (valid && step < 3) {
       setStep((s) => s + 1);
     }
   };
 
-  const prevStep = () => setStep((s) => s - 1);
+  const prevStep = (event: React.MouseEvent<HTMLButtonElement>) => {
+    // Previne qualquer submissão do formulário
+    event.preventDefault();
+    event.stopPropagation();
+    setStep((s) => s - 1);
+  };
 
   return (
     <FormProvider {...methods}>
@@ -176,7 +201,7 @@ export function EventForm({
           })}
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <div className="space-y-6">
           <Card className="p-8 bg-gradient-to-br from-[#222222] via-[#2b2b2b] to-[#1e1e1e] border border-neutral-700 shadow-xl">
             <div className="space-y-6">
               <div className="flex items-center gap-3 pb-4 border-b border-neutral-700">
@@ -593,7 +618,7 @@ export function EventForm({
               <Button
                 type="button"
                 variant="outline"
-                onClick={prevStep}
+                onClick={(e) => prevStep(e)}
                 className="flex-1 bg-transparent hover:bg-neutral-700/50 text-neutral-300 hover:text-white border border-neutral-600 hover:border-neutral-500 font-medium py-3 px-6 rounded-lg transition-all duration-200"
               >
                 <ChevronLeft className="h-4 w-4 mr-2" />
@@ -604,7 +629,7 @@ export function EventForm({
             {step < 3 ? (
               <Button
                 type="button"
-                onClick={nextStep}
+                onClick={(e) => nextStep(e)}
                 className="flex-1 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white font-medium py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
               >
                 Próximo
@@ -612,7 +637,8 @@ export function EventForm({
               </Button>
             ) : (
               <Button
-                type="submit"
+                type="button"
+                onClick={handleSave}
                 disabled={isSubmitting}
                 className="flex-1 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white font-medium py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -643,7 +669,7 @@ export function EventForm({
               Cancelar e voltar para a lista
             </Link>
           </div>
-        </form>
+        </div>
       </div>
     </FormProvider>
   );

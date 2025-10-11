@@ -327,7 +327,7 @@ export default function EventsListPage() {
               <Card
                 key={event.id}
                 className={`bg-gradient-to-br from-[#222222] via-[#2b2b2b] to-[#1e1e1e] text-white border border-neutral-700 shadow-lg hover:shadow-xl transition-all duration-200 ${
-                  viewMode === 'list' ? 'p-6' : 'p-5'
+                  viewMode === 'list' ? 'p-6' : 'p-5 hover:border-orange-500/50 transform hover:-translate-y-1'
                 }`}
               >
                 {viewMode === 'grid' ? (
