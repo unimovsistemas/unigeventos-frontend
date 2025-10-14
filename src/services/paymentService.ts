@@ -50,3 +50,84 @@ export const getPaymentsPage = async (
     );
   }
 };
+
+// Tipos e interfaces para processamento de pagamento
+export type PaymentType = "CREDIT_CARD" | "INVOICE" | "PIX";
+export type PaymentProvider = "AD_EVENTOS";
+
+export interface CreditCardInfo {
+  cardholderName: string;
+  cardNumber: string;
+  expirationMonth: string;
+  expirationYear: string;
+  cvv: string;
+}
+
+export interface PaymentData {
+  registrationId: string;
+  paymentId?: string;
+  paymentType: PaymentType;
+  provider: PaymentProvider;
+  installments?: number;
+  discountCouponCode?: string;
+  creditCardInfo?: CreditCardInfo;
+}
+
+export interface ProcessPaymentResponse {
+  id: string;
+  registrationId: string;
+  amount: number;
+  status: string;
+  paymentType: PaymentType;
+  provider: PaymentProvider;
+  installments?: number;
+  discountApplied?: number;
+  processedAt: string;
+  pixCode?: string;
+  invoiceUrl?: string;
+}
+
+export const processPayment = async (
+  paymentData: PaymentData
+): Promise<ProcessPaymentResponse> => {
+  try {
+    const token = localStorage.getItem('accessToken');
+    
+    const response = await axios.post(
+      `${API_URL}/actions/process-payment`,
+      paymentData,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Erro ao processar pagamento:', error);
+    throw new Error(
+      error?.response?.data?.message ||
+        "Erro ao processar pagamento!"
+    );
+  }
+};
+
+export const getPaymentTypeLabel = (type: PaymentType): string => {
+  const labels = {
+    CREDIT_CARD: 'Cartão de Crédito',
+    INVOICE: 'Boleto Bancário',
+    PIX: 'PIX'
+  };
+  
+  return labels[type];
+};
+
+export const getPaymentProviderLabel = (provider: PaymentProvider): string => {
+  const labels = {
+    AD_EVENTOS: 'AD Eventos'
+  };
+  
+  return labels[provider];
+};

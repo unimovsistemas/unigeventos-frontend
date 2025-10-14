@@ -4,9 +4,20 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { EventDataResponse } from '@/services/eventsService';
 import { getEventById } from '@/services/publicEventsService';
+import { 
+  PaymentData, 
+  PaymentType, 
+  PaymentProvider,
+  CreditCardInfo,
+  processPayment,
+  getPaymentTypeLabel 
+} from '@/services/paymentService';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
 import { 
   Calendar, 
   CreditCard, 
@@ -19,7 +30,11 @@ import {
   User,
   MapPin,
   Receipt,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  FileText,
+  Smartphone,
+  Percent,
+  Home
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -34,6 +49,22 @@ export default function PaymentPage() {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [paymentType, setPaymentType] = useState<PaymentType>('PIX');
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [formData, setFormData] = useState<PaymentData>({
+    registrationId: registrationId || '',
+    paymentType: 'PIX',
+    provider: 'AD_EVENTOS',
+    installments: 1,
+    discountCouponCode: '',
+    creditCardInfo: {
+      cardholderName: '',
+      cardNumber: '',
+      expirationMonth: '',
+      expirationYear: '',
+      cvv: ''
+    }
+  });
 
   useEffect(() => {
     const fetchEventDetails = async () => {
@@ -57,17 +88,70 @@ export default function PaymentPage() {
     }
   }, [eventId]);
 
-  const handlePayNow = async () => {
-    setProcessing(true);
-    // Simular processamento do pagamento
-    setTimeout(() => {
-      setProcessing(false);
-      router.push(`/eventos/${eventId}/confirmacao?registrationId=${registrationId}&paid=true`);
-    }, 2000);
+  const handlePayNow = () => {
+    setShowPaymentForm(true);
   };
 
   const handlePayLater = () => {
-    router.push(`/eventos/${eventId}/confirmacao?registrationId=${registrationId}&paid=false`);
+    router.push('/eventos');
+  };
+
+  const handlePaymentTypeChange = (type: PaymentType) => {
+    setPaymentType(type);
+    setFormData(prev => ({
+      ...prev,
+      paymentType: type,
+      installments: type === 'CREDIT_CARD' ? 1 : undefined
+    }));
+  };
+
+  const handleInputChange = (field: string, value: string | number) => {
+    if (field.startsWith('creditCard.')) {
+      const cardField = field.replace('creditCard.', '');
+      setFormData(prev => ({
+        ...prev,
+        creditCardInfo: {
+          ...prev.creditCardInfo!,
+          [cardField]: value
+        }
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    }
+  };
+
+  const handleSubmitPayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      setProcessing(true);
+      setError(null);
+      
+      const paymentData: PaymentData = {
+        ...formData,
+        registrationId: registrationId!
+      };
+
+      // Se não for cartão de crédito, remover informações do cartão
+      if (paymentType !== 'CREDIT_CARD') {
+        delete paymentData.creditCardInfo;
+        delete paymentData.installments;
+      }
+
+      const response = await processPayment(paymentData);
+
+      // Redirecionar para confirmação com sucesso
+      router.push(`/eventos/${eventId}/confirmacao?registrationId=${registrationId}&paid=true`);
+      
+    } catch (err: any) {
+      console.error('Erro ao processar pagamento:', err);
+      setError(err.message || 'Erro ao processar pagamento.');
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const formatDateTime = (date: Date | string | null | undefined) => {
@@ -260,81 +344,296 @@ export default function PaymentPage() {
         </CardContent>
       </Card>
 
-      {/* Payment Options */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Pay Now */}
-        <Card className="border-green-200 hover:border-green-300 transition-colors">
-          <CardHeader>
-            <CardTitle className="text-lg text-green-700 flex items-center space-x-2">
-              <CreditCard className="h-5 w-5" />
-              <span>Pagar Agora</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-gray-700 text-sm">
-              Finalize seu pagamento agora e garante sua vaga imediatamente no evento.
-            </p>
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <h4 className="font-medium text-green-800 mb-2">Vantagens:</h4>
-              <ul className="text-sm text-green-700 space-y-1">
-                <li>• Vaga garantida instantaneamente</li>
-                <li>• Sem preocupações com prazos</li>
-                <li>• Receba QR Code de acesso</li>
-                <li>• Confirmação imediata por e-mail</li>
-              </ul>
-            </div>
-            <Button
-              onClick={handlePayNow}
-              disabled={processing}
-              className="w-full bg-green-600 hover:bg-green-700 text-white py-3"
-            >
-              {processing ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Processando...
-                </>
-              ) : (
-                <>
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  Pagar {currentBatch ? formatPrice(currentBatch.price) : 'Agora'}
-                </>
-              )}
-            </Button>
-          </CardContent>
-        </Card>
+      {/* Payment Options or Form */}
+      {!showPaymentForm ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Pay Now */}
+          <Card className="border-green-200 hover:border-green-300 transition-colors">
+            <CardHeader>
+              <CardTitle className="text-lg text-green-700 flex items-center space-x-2">
+                <CreditCard className="h-5 w-5" />
+                <span>Pagar Agora</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-gray-700 text-sm">
+                Finalize seu pagamento agora e garanta sua vaga imediatamente no evento.
+              </p>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <h4 className="font-medium text-green-800 mb-2">Vantagens:</h4>
+                <ul className="text-sm text-green-700 space-y-1">
+                  <li>• Vaga garantida instantaneamente</li>
+                  <li>• Sem preocupações com prazos</li>
+                  <li>• Receba QR Code de acesso</li>
+                  <li>• Confirmação imediata por e-mail</li>
+                </ul>
+              </div>
+              <Button
+                onClick={handlePayNow}
+                className="w-full bg-green-600 hover:bg-green-700 text-white py-3"
+              >
+                <CreditCard className="h-4 w-4 mr-2" />
+                Pagar {currentBatch ? formatPrice(currentBatch.price) : 'Agora'}
+              </Button>
+            </CardContent>
+          </Card>
 
-        {/* Pay Later */}
-        <Card className="border-yellow-200 hover:border-yellow-300 transition-colors">
+          {/* Pay Later */}
+          <Card className="border-yellow-200 hover:border-yellow-300 transition-colors">
+            <CardHeader>
+              <CardTitle className="text-lg text-yellow-700 flex items-center space-x-2">
+                <Home className="h-5 w-5" />
+                <span>Pagar Depois</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-gray-700 text-sm">
+                Volte para a lista de eventos e pague quando quiser.
+              </p>
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <h4 className="font-medium text-yellow-800 mb-2">Importante:</h4>
+                <ul className="text-sm text-yellow-700 space-y-1">
+                  <li>• Sua vaga foi reservada</li>
+                  <li>• Pague até {formatDate(event.finalDatePayment)}</li>
+                  <li>• Risco de perder a vaga se não pagar</li>
+                  <li>• Receberá lembretes por e-mail</li>
+                </ul>
+              </div>
+              <Button
+                onClick={handlePayLater}
+                variant="outline"
+                className="w-full border-yellow-600 text-yellow-700 hover:bg-yellow-50 py-3"
+              >
+                <Home className="h-4 w-4 mr-2" />
+                Voltar aos Eventos
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        /* Payment Form */
+        <Card className="border-gray-200 shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg text-yellow-700 flex items-center space-x-2">
-              <Clock className="h-5 w-5" />
-              <span>Pagar Depois</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-gray-700 text-sm">
-              Reserve sua vaga e pague até a data limite. Lembre-se do prazo!
-            </p>
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <h4 className="font-medium text-yellow-800 mb-2">Importante:</h4>
-              <ul className="text-sm text-yellow-700 space-y-1">
-                <li>• Vaga reservada temporariamente</li>
-                <li>• Pague até {formatDate(event.finalDatePayment)}</li>
-                <li>• Risco de perder a vaga se não pagar</li>
-                <li>• Receberá lembretes por e-mail</li>
-              </ul>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-xl text-gray-900 flex items-center space-x-2">
+                <CreditCard className="h-5 w-5 text-orange-600" />
+                <span>Finalizar Pagamento</span>
+              </CardTitle>
+              <Button
+                onClick={() => setShowPaymentForm(false)}
+                variant="outline"
+                size="sm"
+              >
+                Voltar
+              </Button>
             </div>
-            <Button
-              onClick={handlePayLater}
-              variant="outline"
-              className="w-full border-yellow-600 text-yellow-700 hover:bg-yellow-50 py-3"
-            >
-              <Clock className="h-4 w-4 mr-2" />
-              Reservar Vaga
-            </Button>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmitPayment} className="space-y-6">
+              {/* Payment Type */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium text-gray-700">
+                  Forma de Pagamento *
+                </Label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handlePaymentTypeChange('PIX')}
+                    className={`p-4 rounded-lg border-2 transition-colors ${
+                      paymentType === 'PIX' 
+                        ? 'border-orange-500 bg-orange-50' 
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <Smartphone className="h-6 w-6 mx-auto mb-2 text-orange-600" />
+                    <span className="text-sm font-medium">PIX</span>
+                    <p className="text-xs text-gray-500 mt-1">Instantâneo</p>
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => handlePaymentTypeChange('CREDIT_CARD')}
+                    className={`p-4 rounded-lg border-2 transition-colors ${
+                      paymentType === 'CREDIT_CARD' 
+                        ? 'border-orange-500 bg-orange-50' 
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <CreditCard className="h-6 w-6 mx-auto mb-2 text-orange-600" />
+                    <span className="text-sm font-medium">Cartão</span>
+                    <p className="text-xs text-gray-500 mt-1">Até 12x</p>
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => handlePaymentTypeChange('INVOICE')}
+                    className={`p-4 rounded-lg border-2 transition-colors ${
+                      paymentType === 'INVOICE' 
+                        ? 'border-orange-500 bg-orange-50' 
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <FileText className="h-6 w-6 mx-auto mb-2 text-orange-600" />
+                    <span className="text-sm font-medium">Boleto</span>
+                    <p className="text-xs text-gray-500 mt-1">3 dias úteis</p>
+                  </button>
+                </div>
+              </div>
+
+              {/* Discount Coupon */}
+              <div className="space-y-3">
+                <Label htmlFor="discountCoupon" className="text-sm font-medium text-gray-700">
+                  Cupom de Desconto (opcional)
+                </Label>
+                <div className="flex space-x-2">
+                  <Input
+                    id="discountCoupon"
+                    type="text"
+                    placeholder="Digite seu cupom de desconto"
+                    value={formData.discountCouponCode}
+                    onChange={(e) => handleInputChange('discountCouponCode', e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button type="button" variant="outline" className="px-4">
+                    <Percent className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Credit Card Form */}
+              {paymentType === 'CREDIT_CARD' && (
+                <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+                  <h4 className="font-medium text-gray-900">Dados do Cartão de Crédito</h4>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="sm:col-span-2">
+                      <Label htmlFor="cardholderName" className="text-sm font-medium text-gray-700">
+                        Nome do Portador *
+                      </Label>
+                      <Input
+                        id="cardholderName"
+                        type="text"
+                        placeholder="Nome como impresso no cartão"
+                        value={formData.creditCardInfo?.cardholderName}
+                        onChange={(e) => handleInputChange('creditCard.cardholderName', e.target.value)}
+                        required
+                      />
+                    </div>
+                    
+                    <div className="sm:col-span-2">
+                      <Label htmlFor="cardNumber" className="text-sm font-medium text-gray-700">
+                        Número do Cartão *
+                      </Label>
+                      <Input
+                        id="cardNumber"
+                        type="text"
+                        placeholder="0000 0000 0000 0000"
+                        value={formData.creditCardInfo?.cardNumber}
+                        onChange={(e) => handleInputChange('creditCard.cardNumber', e.target.value)}
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="expirationMonth" className="text-sm font-medium text-gray-700">
+                        Mês *
+                      </Label>
+                      <Select
+                        options={Array.from({length: 12}, (_, i) => ({
+                          value: String(i + 1).padStart(2, '0'),
+                          label: String(i + 1).padStart(2, '0')
+                        }))}
+                        value={formData.creditCardInfo?.expirationMonth || ''}
+                        onChange={(value) => handleInputChange('creditCard.expirationMonth', value)}
+                        placeholder="MM"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="expirationYear" className="text-sm font-medium text-gray-700">
+                        Ano *
+                      </Label>
+                      <Select
+                        options={Array.from({length: 10}, (_, i) => {
+                          const year = new Date().getFullYear() + i;
+                          return {
+                            value: String(year),
+                            label: String(year)
+                          };
+                        })}
+                        value={formData.creditCardInfo?.expirationYear || ''}
+                        onChange={(value) => handleInputChange('creditCard.expirationYear', value)}
+                        placeholder="AAAA"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="cvv" className="text-sm font-medium text-gray-700">
+                        CVV *
+                      </Label>
+                      <Input
+                        id="cvv"
+                        type="text"
+                        placeholder="000"
+                        maxLength={4}
+                        value={formData.creditCardInfo?.cvv}
+                        onChange={(e) => handleInputChange('creditCard.cvv', e.target.value)}
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="installments" className="text-sm font-medium text-gray-700">
+                        Parcelas *
+                      </Label>
+                      <Select
+                        options={Array.from({length: 12}, (_, i) => ({
+                          value: String(i + 1),
+                          label: `${i + 1}x ${currentBatch ? formatPrice(currentBatch.price / (i + 1)) : ''}`
+                        }))}
+                        value={String(formData.installments || 1)}
+                        onChange={(value) => handleInputChange('installments', Number(value))}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Error Message */}
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div className="flex items-start space-x-2">
+                    <AlertCircle className="h-4 w-4 text-red-600 mt-0.5" />
+                    <div className="text-sm">
+                      <p className="font-medium text-red-800">Erro no Pagamento</p>
+                      <p className="text-red-700 mt-1">{error}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                disabled={processing}
+                className="w-full bg-green-600 hover:bg-green-700 text-white py-3 text-lg font-semibold"
+              >
+                {processing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Processando Pagamento...
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    Finalizar Pagamento {currentBatch ? formatPrice(currentBatch.price) : ''}
+                  </>
+                )}
+              </Button>
+            </form>
           </CardContent>
         </Card>
-      </div>
+      )}
 
       {/* Important Information */}
       <Card className="border-blue-200 bg-blue-50">
