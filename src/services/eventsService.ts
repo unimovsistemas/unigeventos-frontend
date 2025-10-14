@@ -43,6 +43,7 @@ export interface EventData {
   hasTransport: boolean;
   termIsRequired: boolean;
   isFree: boolean;
+  organizerName?: string;
   organizerId: string;
   organizer?: {
     id: string;

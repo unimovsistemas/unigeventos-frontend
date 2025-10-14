@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { EventDataResponse } from '@/services/eventsService';
-import { getPublicEvents } from '@/services/publicEventsService';
+import { getEventById } from '@/services/publicEventsService';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -21,7 +21,9 @@ import {
   CreditCard,
   Gift,
   Bus,
-  Star
+  Star,
+  ChurchIcon,
+  BusIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -58,61 +60,58 @@ export default function EventDetailsPage() {
         setLoading(true);
         setError(null);
         
-        // Buscar todos os eventos e filtrar pelo ID
-        const events = await getPublicEvents();
-        const foundEvent = events.find(e => e.id === eventId);
+        // Buscar evento específico pelo ID
+        const eventData = await getEventById(eventId);
+        setEvent(eventData);
         
-        if (foundEvent) {
-          setEvent(foundEvent);
-        } else {
-          // Mock data para demonstração
-          const mockEvent: EventDataResponse = {
-            id: eventId,
-            name: 'Conferência de Jovens 2025',
-            description: 'Uma conferência especial voltada para jovens e adolescentes, com pregações inspiradoras, louvores e momentos de comunhão. Este evento visa fortalecer a fé dos participantes e promover o crescimento espiritual através de uma programação rica e diversificada.\n\nA conferência contará com palestrantes renomados, bandas de louvor especiais e atividades interativas que prometem marcar a vida de cada participante. Será um fim de semana inesquecível de renovação espiritual e crescimento pessoal.',
-            location: 'Centro de Convenções UniMovimento - Auditório Principal\nRua das Flores, 123 - Centro\nSão Paulo, SP - CEP: 01234-567',
-            type: 'CONFERENCE',
-            startDatetime: new Date('2025-02-15T09:00:00'),
-            endDatetime: new Date('2025-02-16T18:00:00'),
-            registrationStartDate: new Date('2025-01-01T00:00:00'),
-            registrationDeadline: new Date('2025-02-10T23:59:59'),
-            finalDatePayment: new Date('2025-02-12T23:59:59'),
-            capacity: 500,
-            isPublished: true,
-            hasTransport: true,
-            termIsRequired: false,
-            isFree: false,
-            organizerId: '1',
-            organizer: {
-              id: '1',
-              name: 'Ministério de Jovens UniMovimento'
-            },
-            numberOfSubscribers: 127,
-            batches: [
-              {
-                id: '1',
-                name: 'Lote Promocional',
-                capacity: 200,
-                price: 89.90,
-                startDate: new Date('2025-01-01T00:00:00'),
-                endDate: new Date('2025-01-31T23:59:59')
-              },
-              {
-                id: '2',
-                name: 'Lote Regular',
-                capacity: 300,
-                price: 119.90,
-                startDate: new Date('2025-02-01T00:00:00'),
-                endDate: new Date('2025-02-10T23:59:59')
-              }
-            ]
-          };
-          
-          setEvent(mockEvent);
-        }
       } catch (err) {
         console.error('Erro ao carregar detalhes do evento:', err);
         setError('Não foi possível carregar os detalhes do evento.');
+        
+        // Mock data para demonstração quando a API falhar
+        const mockEvent: EventDataResponse = {
+          id: eventId,
+          name: 'Conferência de Jovens 2025',
+          description: 'Uma conferência especial voltada para jovens e adolescentes, com pregações inspiradoras, louvores e momentos de comunhão. Este evento visa fortalecer a fé dos participantes e promover o crescimento espiritual através de uma programação rica e diversificada.\n\nA conferência contará com palestrantes renomados, bandas de louvor especiais e atividades interativas que prometem marcar a vida de cada participante. Será um fim de semana inesquecível de renovação espiritual e crescimento pessoal.',
+          location: 'Centro de Convenções UniMovimento - Auditório Principal\nRua das Flores, 123 - Centro\nSão Paulo, SP - CEP: 01234-567',
+          type: 'CONFERENCE',
+          startDatetime: new Date('2025-02-15T09:00:00'),
+          endDatetime: new Date('2025-02-16T18:00:00'),
+          registrationStartDate: new Date('2025-01-01T00:00:00'),
+          registrationDeadline: new Date('2025-02-10T23:59:59'),
+          finalDatePayment: new Date('2025-02-12T23:59:59'),
+          capacity: 500,
+          isPublished: true,
+          hasTransport: true,
+          termIsRequired: false,
+          isFree: false,
+          organizerId: '1',
+          organizer: {
+            id: '1',
+            name: 'Ministério de Jovens UniMovimento'
+          },
+          numberOfSubscribers: 127,
+          batches: [
+            {
+              id: '1',
+              name: 'Lote Promocional',
+              capacity: 200,
+              price: 89.90,
+              startDate: new Date('2025-01-01T00:00:00'),
+              endDate: new Date('2025-01-31T23:59:59')
+            },
+            {
+              id: '2',
+              name: 'Lote Regular',
+              capacity: 300,
+              price: 119.90,
+              startDate: new Date('2025-02-01T00:00:00'),
+              endDate: new Date('2025-02-10T23:59:59')
+            }
+          ]
+        };
+        
+        setEvent(mockEvent);
       } finally {
         setLoading(false);
       }
@@ -127,22 +126,38 @@ export default function EventDetailsPage() {
     router.push(`/login?redirect=/eventos/${eventId}/register`);
   };
 
-  const formatDateTime = (date: Date) => {
+  const formatDateTime = (date: Date | string | null | undefined) => {
+    if (!date) return 'Data não informada';
+    
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    
+    if (isNaN(dateObj.getTime())) {
+      return 'Data inválida';
+    }
+    
     return new Intl.DateTimeFormat('pt-BR', {
       day: '2-digit',
       month: 'long',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
-    }).format(date);
+    }).format(dateObj);
   };
 
-  const formatDate = (date: Date) => {
+  const formatDate = (date: Date | string | null | undefined) => {
+    if (!date) return 'Data não informada';
+    
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    
+    if (isNaN(dateObj.getTime())) {
+      return 'Data inválida';
+    }
+    
     return new Intl.DateTimeFormat('pt-BR', {
       day: '2-digit',
       month: 'long',
       year: 'numeric'
-    }).format(date);
+    }).format(dateObj);
   };
 
   const formatPrice = (price: number) => {
@@ -153,12 +168,20 @@ export default function EventDetailsPage() {
   };
 
   const getCurrentBatch = () => {
-    if (!event || event.isFree) return null;
+    if (!event || event.isFree || !event.batches) return null;
     
     const now = new Date();
-    return event.batches?.find(batch => 
-      new Date(batch.startDate) <= now && new Date(batch.endDate) >= now
-    );
+    return event.batches.find(batch => {
+      const startDate = new Date(batch.startDate);
+      const endDate = new Date(batch.endDate);
+      
+      // Verificar se as datas são válidas
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        return false;
+      }
+      
+      return startDate <= now && endDate >= now;
+    });
   };
 
   const getAvailableSlots = () => {
@@ -170,8 +193,15 @@ export default function EventDetailsPage() {
     if (!event) return false;
     
     const now = new Date();
-    return new Date(event.registrationStartDate) <= now && 
-           new Date(event.registrationDeadline) >= now;
+    const startDate = new Date(event.registrationStartDate);
+    const endDate = new Date(event.registrationDeadline);
+    
+    // Verificar se as datas são válidas
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      return false;
+    }
+    
+    return startDate <= now && endDate >= now;
   };
 
   if (loading) {
@@ -259,15 +289,15 @@ export default function EventDetailsPage() {
                     )}
                     {event.hasTransport && (
                       <Badge className="bg-blue-100 text-blue-800 border-blue-200 px-3 py-1 text-sm font-medium border">
-                        <Bus className="h-3 w-3 mr-1" />
+                        <BusIcon className="h-3 w-3 mr-1" />
                         Transporte
                       </Badge>
                     )}
                   </div>
                   <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">{event.name}</h1>
                   <div className="flex items-center text-gray-600 mb-4">
-                    <User className="h-4 w-4 mr-2" />
-                    <span>Organizado por {event.organizer?.name}</span>
+                    <ChurchIcon className="h-4 w-4 mr-2" />
+                    <span>Organizado por {event.organizerName}</span>
                   </div>
                 </div>
               </div>
