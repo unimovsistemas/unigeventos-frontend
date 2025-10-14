@@ -2,6 +2,7 @@
 
 import axios from "axios";
 import { Batch } from "./eventsService";
+import { Registration, RegistrationExistsResponse } from "../types/registration";
 
 export type SubscriptionStatus =
   | "PENDING"
@@ -222,4 +223,64 @@ export const getTransportationTypeLabel = (type: TransportationType): string => 
   };
   
   return labels[type];
+};
+
+// Buscar dados completos de uma inscrição específica
+export const getRegistrationById = async (
+  registrationId: string
+): Promise<Registration> => {
+  try {
+    const token = localStorage.getItem('accessToken');
+    
+    const response = await axios.get(
+      `${API_URL}/entities/${registrationId}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Erro ao buscar dados da inscrição:', error);
+    throw new Error(
+      error?.response?.data?.message ||
+        "Erro ao buscar dados da inscrição!"
+    );
+  }
+};
+
+// Verificar se uma inscrição existe para um evento específico
+export const checkRegistrationExists = async (
+  eventId: string
+): Promise<RegistrationExistsResponse> => {
+  try {
+    const token = localStorage.getItem('accessToken');
+    
+    const response = await axios.get(
+      `${API_URL}/queries/check-exists`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        params: {
+          eventId: eventId
+        }
+      }
+    );
+
+    return response.data;
+  } catch (error: any) {
+    // Se não encontrar inscrição, retornar que não existe
+    if (error?.response?.status === 404) {
+      return { exists: false };
+    }
+    
+    console.error('Erro ao verificar existência da inscrição:', error);
+    throw new Error(
+      error?.response?.data?.message ||
+        "Erro ao verificar inscrição!"
+    );
+  }
 };

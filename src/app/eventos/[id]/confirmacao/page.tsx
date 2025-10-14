@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { EventDataResponse } from '@/services/eventsService';
 import { getEventById } from '@/services/publicEventsService';
+import { getRegistrationById, getTransportationTypeLabel } from '@/services/registrationService';
+import { Registration } from '@/types/registration';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -35,30 +37,41 @@ export default function ConfirmationPage() {
   const paid = searchParams.get('paid') === 'true';
   
   const [event, setEvent] = useState<EventDataResponse | null>(null);
+  const [registration, setRegistration] = useState<Registration | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchEventDetails = async () => {
+    const fetchRegistrationDetails = async () => {
       try {
         setLoading(true);
         setError(null);
         
-        const eventData = await getEventById(eventId);
+        if (!registrationId) {
+          setError('ID da inscrição não fornecido.');
+          return;
+        }
+        
+        // Buscar dados completos da inscrição
+        const registrationData = await getRegistrationById(registrationId);
+        setRegistration(registrationData);
+        
+        // Definir o evento a partir dos dados da inscrição (conversão de tipos)
+        const eventData = registrationData.event as any as EventDataResponse;
         setEvent(eventData);
         
       } catch (err) {
-        console.error('Erro ao carregar detalhes do evento:', err);
-        setError('Não foi possível carregar os detalhes do evento.');
+        console.error('Erro ao carregar detalhes da inscrição:', err);
+        setError('Não foi possível carregar os detalhes da inscrição.');
       } finally {
         setLoading(false);
       }
     };
 
-    if (eventId) {
-      fetchEventDetails();
+    if (eventId && registrationId) {
+      fetchRegistrationDetails();
     }
-  }, [eventId]);
+  }, [eventId, registrationId]);
 
   const formatDateTime = (date: Date | string | null | undefined) => {
     if (!date) return 'Data não informada';
@@ -95,19 +108,10 @@ export default function ConfirmationPage() {
   };
 
   const getCurrentBatch = () => {
-    if (!event || event.isFree || !event.batches) return null;
+    if (!registration) return null;
     
-    const now = new Date();
-    return event.batches.find(batch => {
-      const startDate = new Date(batch.startDate);
-      const endDate = new Date(batch.endDate);
-      
-      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-        return false;
-      }
-      
-      return startDate <= now && endDate >= now;
-    });
+    // Retornar o lote específico da inscrição
+    return registration.batch;
   };
 
   const formatPrice = (price: number) => {
@@ -145,6 +149,190 @@ export default function ConfirmationPage() {
     }
   };
 
+  const handlePrintRegistration = () => {
+    if (!registration) return;
+
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Dados da Inscrição - ${event?.name}</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              margin: 20px;
+              line-height: 1.4;
+            }
+            .header {
+              display: flex;
+              align-items: center;
+              margin-bottom: 20px;
+              color: #ea580c;
+            }
+            .header h1 {
+              margin: 0;
+              font-size: 20px;
+              font-weight: bold;
+            }
+            .section {
+              margin-bottom: 20px;
+            }
+            .section-title {
+              background-color: #fed7aa;
+              padding: 8px 12px;
+              border-radius: 8px;
+              font-weight: bold;
+              color: #9a3412;
+              margin-bottom: 12px;
+              display: flex;
+              align-items: center;
+            }
+            .section-content {
+              background-color: #f9fafb;
+              padding: 16px;
+              border-radius: 8px;
+              border: 1px solid #e5e7eb;
+            }
+            .field-grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 16px;
+            }
+            .field {
+              margin-bottom: 8px;
+            }
+            .field-label {
+              font-weight: bold;
+              color: #111827;
+            }
+            .field-value {
+              color: #374151;
+            }
+            .qr-section {
+              text-align: center;
+              margin-top: 20px;
+            }
+            .qr-code {
+              max-width: 200px;
+              height: auto;
+              margin: 12px auto;
+            }
+            .qr-description {
+              font-size: 14px;
+              color: #6b7280;
+            }
+            @media print {
+              body { margin: 0; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>🧾 Dados da Inscrição</h1>
+          </div>
+
+          <div class="section">
+            <div class="section-title">
+              👤 Informações Pessoais
+            </div>
+            <div class="section-content">
+              <div class="field-grid">
+                <div class="field">
+                  <div class="field-label">Nome:</div>
+                  <div class="field-value">${registration.person?.name || 'Nome não informado'}</div>
+                </div>
+                <div class="field">
+                  <div class="field-label">E-mail:</div>
+                  <div class="field-value">${registration.person?.contact?.email || 'E-mail não informado'}</div>
+                </div>
+                <div class="field">
+                  <div class="field-label">Telefone:</div>
+                  <div class="field-value">${registration.person?.contact?.phoneNumber || 'Telefone não informado'}</div>
+                </div>
+                <div class="field">
+                  <div class="field-label">Igreja:</div>
+                  <div class="field-value">${registration.person?.church || 'Igreja não informada'}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">
+              📋 Detalhes da Inscrição
+            </div>
+            <div class="section-content">
+              <div class="field-grid">
+                <div class="field">
+                  <div class="field-label">Lote:</div>
+                  <div class="field-value">${registration.batch?.name || 'Lote não informado'}</div>
+                </div>
+                <div class="field">
+                  <div class="field-label">Valor:</div>
+                  <div class="field-value">R$ ${registration.batch?.price?.toFixed(2).replace('.', ',') || '0,00'}</div>
+                </div>
+                <div class="field">
+                  <div class="field-label">Transporte:</div>
+                  <div class="field-value">${registration.transportationType ? getTransportationTypeLabel(registration.transportationType as any) : 'Não informado'}</div>
+                </div>
+                <div class="field">
+                  <div class="field-label">Data da Inscrição:</div>
+                  <div class="field-value">${formatDate(registration.registrationDate)}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          ${(registration.ministries || registration.additionalInfo) ? `
+          <div class="section">
+            <div class="section-title">
+              🏠 Informações Adicionais
+            </div>
+            <div class="section-content">
+              ${registration.ministries ? `
+                <div class="field">
+                  <div class="field-label">Ministérios:</div>
+                  <div class="field-value">${registration.ministries}</div>
+                </div>
+              ` : ''}
+              ${registration.additionalInfo ? `
+                <div class="field">
+                  <div class="field-label">Observações:</div>
+                  <div class="field-value">${registration.additionalInfo}</div>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+          ` : ''}
+
+          ${registration.qrCodeBase64 ? `
+          <div class="section">
+            <div class="section-title">
+              🔲 QR Code de Acesso
+            </div>
+            <div class="qr-section">
+              <img src="data:image/png;base64,${registration.qrCodeBase64}" alt="QR Code de Acesso" class="qr-code" />
+              <p class="qr-description">Apresente este código no dia do evento</p>
+            </div>
+          </div>
+          ` : ''}
+        </body>
+      </html>
+    `;
+
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.focus();
+      
+      // Aguardar um pouco para garantir que o conteúdo foi carregado antes de imprimir
+      setTimeout(() => {
+        printWindow.print();
+      }, 500);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col justify-center items-center py-12 sm:py-16 lg:py-20">
@@ -154,12 +342,12 @@ export default function ConfirmationPage() {
     );
   }
 
-  if (error || !event) {
+  if (error || !event || !registration) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
         <AlertCircle className="h-12 w-12 text-red-600 mx-auto mb-4" />
         <h2 className="text-xl font-bold text-red-700 mb-4">Erro ao Carregar Confirmação</h2>
-        <p className="text-red-600 mb-6">{error || 'Evento não encontrado'}</p>
+        <p className="text-red-600 mb-6">{error || 'Inscrição não encontrada'}</p>
         <Button 
           onClick={() => router.push('/eventos')}
           className="bg-red-600 hover:bg-red-700 text-white px-4 sm:px-6 py-2 rounded-lg text-sm sm:text-base"
@@ -244,6 +432,120 @@ export default function ConfirmationPage() {
                 </div>
               </div>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Registration Details */}
+      <Card className="border-gray-200 shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-xl text-gray-900 flex items-center space-x-2">
+            <User className="h-5 w-5 text-orange-600" />
+            <span>Dados da Inscrição</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            {/* Personal Information */}
+            <div>
+              <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center space-x-2">
+                <User className="h-4 w-4 text-orange-600" />
+                <span>Informações Pessoais</span>
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm bg-gray-50 p-4 rounded-lg">
+                <div>
+                  <span className="font-medium text-gray-900">Nome:</span>
+                  <p className="text-gray-700">{registration?.person?.name || 'Nome não informado'}</p>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-900">E-mail:</span>
+                  <p className="text-gray-700">{registration?.person?.contact?.email || 'E-mail não informado'}</p>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-900">Telefone:</span>
+                  <p className="text-gray-700">{registration?.person?.contact?.phoneNumber || 'Telefone não informado'}</p>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-900">Igreja:</span>
+                  <p className="text-gray-700">{registration?.person?.church || 'Igreja não informada'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Registration Specific Information */}
+            <div>
+              <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center space-x-2">
+                <Receipt className="h-4 w-4 text-orange-600" />
+                <span>Detalhes da Inscrição</span>
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm bg-gray-50 p-4 rounded-lg">
+                <div>
+                  <span className="font-medium text-gray-900">Lote:</span>
+                  <p className="text-gray-700">{registration?.batch?.name || 'Lote não informado'}</p>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-900">Valor:</span>
+                  <p className="text-gray-700 font-semibold text-orange-600">
+                    {formatPrice(registration?.batch?.price || 0)}
+                  </p>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-900">Transporte:</span>
+                  <p className="text-gray-700">
+                    {registration?.transportationType ? getTransportationTypeLabel(registration.transportationType as any) : 'Não informado'}
+                  </p>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-900">Data da Inscrição:</span>
+                  <p className="text-gray-700">{formatDate(registration?.registrationDate)}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Additional Information */}
+            {(registration?.ministries || registration?.additionalInfo) && (
+              <div>
+                <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center space-x-2">
+                  <Home className="h-4 w-4 text-orange-600" />
+                  <span>Informações Adicionais</span>
+                </h4>
+                <div className="space-y-3 bg-gray-50 p-4 rounded-lg">
+                  {registration?.ministries && (
+                    <div>
+                      <span className="font-medium text-gray-900">Ministérios:</span>
+                      <p className="text-gray-700 mt-1">{registration.ministries}</p>
+                    </div>
+                  )}
+                  {registration?.additionalInfo && (
+                    <div>
+                      <span className="font-medium text-gray-900">Observações:</span>
+                      <p className="text-gray-700 mt-1">{registration.additionalInfo}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* QR Code Section */}
+            {paid && registration?.qrCodeBase64 && (
+              <div>
+                <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center space-x-2">
+                  <QrCode className="h-4 w-4 text-orange-600" />
+                  <span>QR Code de Acesso</span>
+                </h4>
+                <div className="bg-white p-4 rounded-lg border text-center">
+                  <img 
+                    src={`data:image/png;base64,${registration.qrCodeBase64}`}
+                    alt="QR Code de Acesso"
+                    className="mx-auto mb-2"
+                    style={{ maxWidth: '200px', height: 'auto' }}
+                  />
+                  <p className="text-sm text-gray-600">
+                    Apresente este código no dia do evento
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -452,12 +754,12 @@ export default function ConfirmationPage() {
 
         {paid && (
           <Button
-            onClick={() => alert('QR Code será enviado por e-mail!')}
+            onClick={handlePrintRegistration}
             variant="outline"
             className="flex-1 border-green-600 text-green-600 hover:bg-green-50 py-3"
           >
             <QrCode className="h-4 w-4 mr-2" />
-            Receber QR Code
+            Imprimir Inscrição e QRCode
           </Button>
         )}
       </div>

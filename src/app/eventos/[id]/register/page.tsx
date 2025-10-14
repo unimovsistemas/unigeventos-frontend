@@ -8,7 +8,8 @@ import {
   RegistrationData, 
   TransportationType, 
   registerForEvent, 
-  getTransportationTypeLabel 
+  getTransportationTypeLabel,
+  checkRegistrationExists 
 } from '@/services/registrationService';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -63,6 +64,15 @@ export default function EventRegistrationPage() {
         setLoading(true);
         setError(null);
         
+        // Verificar se já existe uma inscrição para este evento
+        const registrationExists = await checkRegistrationExists(eventId);
+        
+        if (registrationExists.exists && registrationExists.registrationId) {
+          // Se já existe inscrição, redirecionar para confirmação
+          router.push(`/eventos/${eventId}/confirmacao?registrationId=${registrationExists.registrationId}`);
+          return;
+        }
+        
         const eventData = await getEventById(eventId);
         setEvent(eventData);
         
@@ -77,7 +87,7 @@ export default function EventRegistrationPage() {
     if (eventId) {
       fetchEventDetails();
     }
-  }, [eventId]);
+  }, [eventId, router]);
 
   const handleInputChange = (field: keyof RegistrationData, value: string) => {
     setFormData(prev => ({

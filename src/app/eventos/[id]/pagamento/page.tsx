@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { EventDataResponse } from '@/services/eventsService';
 import { getEventById } from '@/services/publicEventsService';
+import { getRegistrationById } from '@/services/registrationService';
+import { Registration } from '@/types/registration';
 import { 
   PaymentData, 
   PaymentType, 
@@ -46,6 +48,7 @@ export default function PaymentPage() {
   const registrationId = searchParams.get('registrationId');
   
   const [event, setEvent] = useState<EventDataResponse | null>(null);
+  const [registration, setRegistration] = useState<Registration | null>(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -67,26 +70,36 @@ export default function PaymentPage() {
   });
 
   useEffect(() => {
-    const fetchEventDetails = async () => {
+    const fetchRegistrationDetails = async () => {
       try {
         setLoading(true);
         setError(null);
         
-        const eventData = await getEventById(eventId);
+        if (!registrationId) {
+          setError('ID da inscrição não fornecido.');
+          return;
+        }
+        
+        // Buscar dados completos da inscrição
+        const registrationData = await getRegistrationById(registrationId);
+        setRegistration(registrationData);
+        
+        // Definir o evento a partir dos dados da inscrição (conversão de tipos)
+        const eventData = registrationData.event as any as EventDataResponse;
         setEvent(eventData);
         
       } catch (err) {
-        console.error('Erro ao carregar detalhes do evento:', err);
-        setError('Não foi possível carregar os detalhes do evento.');
+        console.error('Erro ao carregar detalhes da inscrição:', err);
+        setError('Não foi possível carregar os detalhes da inscrição.');
       } finally {
         setLoading(false);
       }
     };
 
-    if (eventId) {
-      fetchEventDetails();
+    if (eventId && registrationId) {
+      fetchRegistrationDetails();
     }
-  }, [eventId]);
+  }, [eventId, registrationId]);
 
   const handlePayNow = () => {
     setShowPaymentForm(true);
@@ -189,19 +202,10 @@ export default function PaymentPage() {
   };
 
   const getCurrentBatch = () => {
-    if (!event || event.isFree || !event.batches) return null;
+    if (!registration) return null;
     
-    const now = new Date();
-    return event.batches.find(batch => {
-      const startDate = new Date(batch.startDate);
-      const endDate = new Date(batch.endDate);
-      
-      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-        return false;
-      }
-      
-      return startDate <= now && endDate >= now;
-    });
+    // Retornar o lote específico da inscrição
+    return registration.batch;
   };
 
   const formatPrice = (price: number) => {
@@ -220,12 +224,12 @@ export default function PaymentPage() {
     );
   }
 
-  if (error || !event) {
+  if (error || !event || !registration) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
         <AlertCircle className="h-12 w-12 text-red-600 mx-auto mb-4" />
         <h2 className="text-xl font-bold text-red-700 mb-4">Erro ao Carregar Informações</h2>
-        <p className="text-red-600 mb-6">{error || 'Evento não encontrado'}</p>
+        <p className="text-red-600 mb-6">{error || 'Inscrição não encontrada'}</p>
         <Button 
           onClick={() => router.push('/eventos')}
           className="bg-red-600 hover:bg-red-700 text-white px-4 sm:px-6 py-2 rounded-lg text-sm sm:text-base"
