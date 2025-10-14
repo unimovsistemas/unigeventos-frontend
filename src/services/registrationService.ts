@@ -164,3 +164,62 @@ export const getSubscriptionsByEvent = async (
     );
   }
 };
+
+// Interfaces para registro de evento
+export interface RegistrationData {
+  eventId: string;
+  transportationType: TransportationType;
+  ministries: string;
+  additionalInfo: string;
+}
+
+export interface RegistrationResponse {
+  id: string;
+  eventId: string;
+  userId: string;
+  status: string;
+  registrationDate: string;
+  transportationType: TransportationType;
+  ministries: string;
+  additionalInfo: string;
+  requiresPayment: boolean;
+  paymentDeadline?: string;
+  amount?: number;
+}
+
+export const registerForEvent = async (
+  registrationData: RegistrationData
+): Promise<RegistrationResponse> => {
+  try {
+    const token = localStorage.getItem('accessToken');
+    
+    const response = await axios.post(
+      `${API_URL}/actions/register`,
+      registrationData,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Erro ao realizar inscrição:', error);
+    throw new Error(
+      error?.response?.data?.message ||
+        "Erro ao realizar inscrição no evento!"
+    );
+  }
+};
+
+export const getTransportationTypeLabel = (type: TransportationType): string => {
+  const labels = {
+    PERSONAL: 'Transporte Próprio',
+    EVENT_TRANSPORT: 'Transporte do Evento',
+    NOT_APPLICABLE: 'Não se Aplica'
+  };
+  
+  return labels[type];
+};
