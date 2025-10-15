@@ -59,6 +59,8 @@ export default function PersonListPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [genderFilter, setGenderFilter] = useState<string>("ALL");
   const [roleFilter, setRoleFilter] = useState<string>("ALL");
+  const [churchFilter, setChurchFilter] = useState<string>("ALL");
+  const [maritalStatusFilter, setMaritalStatusFilter] = useState<string>("ALL");
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
 
   const [addRolesModalOpen, setAddRolesModalOpen] = useState(false);
@@ -91,8 +93,16 @@ export default function PersonListPage() {
       );
     }
 
+    if (churchFilter !== "ALL") {
+      filtered = filtered.filter((person) => person.church === churchFilter);
+    }
+
+    if (maritalStatusFilter !== "ALL") {
+      filtered = filtered.filter((person) => person.maritalStatus === maritalStatusFilter);
+    }
+
     setFilteredPersons(filtered);
-  }, [searchTerm, persons, genderFilter, roleFilter]);
+  }, [searchTerm, persons, genderFilter, roleFilter, churchFilter, maritalStatusFilter]);
 
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -233,7 +243,7 @@ export default function PersonListPage() {
             {/* Filters Panel */}
             {showFilters && (
               <div className="pt-4 border-t border-neutral-700">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div>
                     <label className="text-sm text-neutral-300 mb-2 block">Gênero</label>
                     <select
@@ -257,6 +267,35 @@ export default function PersonListPage() {
                       <option value="ROLE_ADMIN">Admin</option>
                       <option value="ROLE_LEADER">Líder</option>
                       <option value="ROLE_USER">Usuário</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm text-neutral-300 mb-2 block">Igreja</label>
+                    <select
+                      value={churchFilter}
+                      onChange={(e) => setChurchFilter(e.target.value)}
+                      className="w-full h-10 rounded-md border border-neutral-600 bg-neutral-800 px-3 py-2 text-sm text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20"
+                    >
+                      <option value="ALL">Todas</option>
+                      {Array.from(new Set(persons.map(p => p.church).filter(Boolean))).sort().map((church) => (
+                        <option key={church} value={church}>
+                          {church}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm text-neutral-300 mb-2 block">Estado Civil</label>
+                    <select
+                      value={maritalStatusFilter}
+                      onChange={(e) => setMaritalStatusFilter(e.target.value)}
+                      className="w-full h-10 rounded-md border border-neutral-600 bg-neutral-800 px-3 py-2 text-sm text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20"
+                    >
+                      <option value="ALL">Todos</option>
+                      <option value="SINGLE">Solteiro(a)</option>
+                      <option value="MARRIED">Casado(a)</option>
+                      <option value="DIVORCED">Divorciado(a)</option>
+                      <option value="NOT_INFORMED">Não Informado</option>
                     </select>
                   </div>
                 </div>
@@ -498,12 +537,12 @@ export default function PersonListPage() {
               <Users className="h-8 w-8 text-neutral-400" />
             </div>
             <h3 className="text-lg font-medium text-neutral-300 mb-2">
-              {searchTerm || genderFilter !== "ALL" || roleFilter !== "ALL"
+              {searchTerm || genderFilter !== "ALL" || roleFilter !== "ALL" || churchFilter !== "ALL" || maritalStatusFilter !== "ALL"
                 ? "Nenhuma pessoa encontrada"
                 : "Nenhuma pessoa cadastrada"}
             </h3>
             <p className="text-sm text-neutral-400">
-              {searchTerm || genderFilter !== "ALL" || roleFilter !== "ALL"
+              {searchTerm || genderFilter !== "ALL" || roleFilter !== "ALL" || churchFilter !== "ALL" || maritalStatusFilter !== "ALL"
                 ? "Tente ajustar os filtros de busca"
                 : "As pessoas aparecerão aqui quando se cadastrarem"}
             </p>
