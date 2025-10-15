@@ -95,10 +95,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-[#444]" />
               <DropdownMenuItem asChild>
-                <Link href="/admin/profile">Meu Perfil</Link>
+                <Link href="/profile">Meu Perfil</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/admin/edit-profile">Editar Dados</Link>
+                <Link href="/edit-profile">Editar Dados</Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-[#444]" />
               <DropdownMenuItem className="text-red-500 hover:text-red-600">
