@@ -33,6 +33,13 @@ export interface SubscriptionsByEventResponse {
     batch: Batch;
 }
 
+export interface SubscriptionsByEventPageResponse {
+  content: SubscriptionsByEventResponse[];
+  number: number;
+  totalPages: number;
+  totalElements: number;
+}
+
 const API_URL = "http://localhost:8001/rest/v1/registrations";
 
 export const checkin = async (
@@ -147,7 +154,7 @@ export const getSubscriptionsByEvent = async (
   searchTerm = "",
   page: number = 0,
   size: number = 10
-): Promise<SubscriptionsByEventResponse[]> => {
+): Promise<SubscriptionsByEventPageResponse> => {
   try {
     const response = await axios.get(`${API_URL}/queries/subscriptions-by-event?page=${page}&size=${size}&searchTerms=${encodeURIComponent(searchTerm)}`, {
       headers: {
