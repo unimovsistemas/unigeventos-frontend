@@ -6,8 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
-import { Loader2 } from "lucide-react";
-import "cleave.js/dist/addons/cleave-phone.br";
+import { Loader2, Tag, Percent, Calendar, Save, X } from "lucide-react";
 import Link from "next/link";
 import {
   DiscountCouponFormData,
@@ -44,66 +43,110 @@ export function DiscountCouponForm({
   }, [defaultValues, reset]);
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="mt-4 space-y-4 max-w-3xl mx-auto"
-    >
-      <div>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      {/* Código do Cupom */}
+      <div className="space-y-2">
+        <label className="flex items-center gap-2 text-sm font-medium text-neutral-300">
+          <Tag className="h-4 w-4 text-orange-400" />
+          Código do Cupom *
+        </label>
         <Input
-          placeholder="Código do Cupom (Ex: UNI10)"
+          placeholder="Ex: DESCONTO10, PROMO2025"
           {...register("code")}
+          className="bg-neutral-800 border-neutral-600 text-white placeholder-neutral-500 focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 uppercase"
+          style={{ textTransform: 'uppercase' }}
         />
         {errors.code && (
-          <p className="text-orange-500 text-sm">{errors.code.message}</p>
+          <p className="text-red-400 text-sm flex items-center gap-1">
+            <span className="text-red-400">⚠</span> {errors.code.message}
+          </p>
         )}
-      </div>
-
-      <div className="relative">
-        <Input
-          placeholder="Percentual de Desconto"
-          {...register("discountPercentage", { valueAsNumber: true })}
-        />
-        <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg pointer-events-none">
-          %
-        </span>
-      </div>
-      {errors.discountPercentage && (
-        <p className="text-orange-500 text-sm mt-1">
-          {errors.discountPercentage.message}
+        <p className="text-xs text-neutral-400">
+          Use apenas letras maiúsculas e números, sem espaços
         </p>
-      )}
+      </div>
 
-      <div>
+      {/* Percentual de Desconto */}
+      <div className="space-y-2">
+        <label className="flex items-center gap-2 text-sm font-medium text-neutral-300">
+          <Percent className="h-4 w-4 text-orange-400" />
+          Percentual de Desconto *
+        </label>
+        <div className="relative">
+          <Input
+            type="number"
+            placeholder="Ex: 10, 15, 20"
+            {...register("discountPercentage", { valueAsNumber: true })}
+            className="bg-neutral-800 border-neutral-600 text-white placeholder-neutral-500 focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 pr-12"
+            min="1"
+            max="100"
+            step="1"
+          />
+          <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-orange-400 text-lg font-semibold pointer-events-none">
+            %
+          </span>
+        </div>
+        {errors.discountPercentage && (
+          <p className="text-red-400 text-sm flex items-center gap-1">
+            <span className="text-red-400">⚠</span> {errors.discountPercentage.message}
+          </p>
+        )}
+        <p className="text-xs text-neutral-400">
+          Digite um valor entre 1% e 100%
+        </p>
+      </div>
+
+      {/* Data de Expiração */}
+      <div className="space-y-2">
+        <label className="flex items-center gap-2 text-sm font-medium text-neutral-300">
+          <Calendar className="h-4 w-4 text-orange-400" />
+          Data de Expiração *
+        </label>
         <CustomDatePicker
           name="expirationDate"
           control={control}
-          placeholder="Data de expiração do cupom"
+          placeholder="Selecione a data de expiração"
           withTime={false}
         />
         {errors.expirationDate && (
-          <p className="text-orange-500 text-sm">
-            {errors.expirationDate.message}
+          <p className="text-red-400 text-sm flex items-center gap-1">
+            <span className="text-red-400">⚠</span> {errors.expirationDate.message}
           </p>
         )}
+        <p className="text-xs text-neutral-400">
+          O cupom ficará ativo até a data selecionada
+        </p>
       </div>
 
-      <Button
-        type="submit"
-        disabled={isSubmitting}
-        className="w-full py-3 px-4 rounded-lg text-white bg-gradient-to-r from-orange-500 to-red-600 hover:bg-gradient-to-l transition-colors duration-300"
-      >
-        {isSubmitting ? (
-          <div className="flex items-center justify-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Salvando...
-          </div>
-        ) : (
-          "Salvar"
-        )}
-      </Button>
-      <div className="flex justify-center mt-6 text-lg w-full">
-        <Link href="/coupons" className="text-orange-500 hover:underline">
-          Cancelar
+      {/* Botões de Ação */}
+      <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-neutral-700">
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+          className="flex-1 py-3 px-6 rounded-lg text-white font-medium bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isSubmitting ? (
+            <div className="flex items-center justify-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Salvando...
+            </div>
+          ) : (
+            <div className="flex items-center justify-center gap-2">
+              <Save className="h-4 w-4" />
+              Salvar Cupom
+            </div>
+          )}
+        </Button>
+        <Link href="/coupons/list" className="flex-1">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isSubmitting}
+            className="w-full py-3 px-6 rounded-lg font-medium bg-transparent border-neutral-600 text-neutral-300 hover:bg-neutral-700 hover:text-white transition-all duration-200"
+          >
+            <X className="h-4 w-4 mr-2" />
+            Cancelar
+          </Button>
         </Link>
       </div>
     </form>
