@@ -174,6 +174,5 @@ export interface RegistrationResponse {
 // Registration existence check response
 export interface RegistrationExistsResponse {
   exists: boolean;
-  registrationId?: string;
-  registration?: Registration;
+  id?: string;
 }

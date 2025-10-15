@@ -67,9 +67,9 @@ export default function EventRegistrationPage() {
         // Verificar se já existe uma inscrição para este evento
         const registrationExists = await checkRegistrationExists(eventId);
         
-        if (registrationExists.exists && registrationExists.registrationId) {
+        if (registrationExists.exists && registrationExists.id) {
           // Se já existe inscrição, redirecionar para confirmação
-          router.push(`/eventos/${eventId}/confirmacao?registrationId=${registrationExists.registrationId}`);
+          router.push(`/eventos/${eventId}/confirmacao?registrationId=${registrationExists.id}`);
           return;
         }
         

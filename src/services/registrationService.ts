@@ -259,18 +259,18 @@ export const checkRegistrationExists = async (
     const token = localStorage.getItem('accessToken');
     
     const response = await axios.get(
-      `${API_URL}/queries/check-exists`,
+      `${API_URL}/queries/get-from-current-user-by-event/${eventId}`,
       {
         headers: {
           'Authorization': `Bearer ${token}`
-        },
-        params: {
-          eventId: eventId
         }
       }
     );
 
-    return response.data;
+    return {
+      exists: response?.data?.id ? true : false,
+      id: response?.data?.id
+    }
   } catch (error: any) {
     // Se não encontrar inscrição, retornar que não existe
     if (error?.response?.status === 404) {

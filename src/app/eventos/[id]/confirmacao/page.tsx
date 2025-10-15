@@ -27,6 +27,28 @@ import {
   Share2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { getSubscriptionPaymentStatus, PaymentStatus, SubscriptionPaymentInfo } from '@/services/paymentService';
+
+const paymentStatusLabel: Record<string, string> = {
+  PENDING: 'Pendente',
+  INPROCESS: 'Em Processamento',
+  APPROVED: 'Aprovado',
+  REJECTED: 'Rejeitado',
+  FAILED: 'Falhou',
+  CANCELLED: 'Cancelado',
+  REFUNDED: 'Reembolsado',
+  EXPIRED: 'Expirado',
+  CHARGEBACK: 'Estornado'
+};
+
+const registrationStatusLabel: Record<string, string> = {
+  CONFIRMED: 'Confirmada',
+  PENDING: 'Pendente',
+  CANCELLED: 'Cancelada',
+  PAID: 'Paga',
+  WAITLIST: 'Lista de Espera',
+  REFUNDED: 'Reembolsada'
+};
 
 export default function ConfirmationPage() {
   const params = useParams();
@@ -38,6 +60,7 @@ export default function ConfirmationPage() {
   
   const [event, setEvent] = useState<EventDataResponse | null>(null);
   const [registration, setRegistration] = useState<Registration | null>(null);
+  const [paymentInfo, setPaymentInfo] = useState<SubscriptionPaymentInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,6 +82,10 @@ export default function ConfirmationPage() {
         // Definir o evento a partir dos dados da inscrição (conversão de tipos)
         const eventData = registrationData.event as any as EventDataResponse;
         setEvent(eventData);
+        
+        // Buscar status do pagamento
+        const paymentStatus = await getSubscriptionPaymentStatus(registrationId);
+        setPaymentInfo(paymentStatus);
         
       } catch (err) {
         console.error('Erro ao carregar detalhes da inscrição:', err);
@@ -391,42 +418,41 @@ export default function ConfirmationPage() {
       </motion.div>
 
       {/* Status Card */}
-      <Card className={`border-2 ${paid ? 'border-green-200 bg-green-50' : 'border-yellow-200 bg-yellow-50'}`}>
+      <Card className={`border-2 ${registration?.status === 'CONFIRMED' ? 'border-green-200 bg-green-50' : registration?.status === 'PENDING' ? 'border-yellow-200 bg-yellow-50' : 'border-gray-200 bg-gray-50'}`}>
         <CardContent className="pt-6">
           <div className="flex items-start space-x-3">
-            {paid ? (
-              <CreditCard className="h-6 w-6 text-green-600 mt-0.5" />
-            ) : (
+            {registration?.status === 'CONFIRMED' ? (
+              <CheckCircle className="h-6 w-6 text-green-600 mt-0.5" />
+            ) : registration?.status === 'PENDING' ? (
               <Clock className="h-6 w-6 text-yellow-600 mt-0.5" />
+            ) : (
+              <AlertCircle className="h-6 w-6 text-gray-600 mt-0.5" />
             )}
             <div className="flex-1">
-              <h3 className={`text-lg font-semibold mb-2 ${paid ? 'text-green-800' : 'text-yellow-800'}`}>
-                {paid ? 'Vaga Confirmada e Paga' : 'Vaga Reservada - Aguardando Pagamento'}
+              <h3 className={`text-lg font-semibold mb-2 ${registration?.status === 'CONFIRMED' ? 'text-green-800' : registration?.status === 'PENDING' ? 'text-yellow-800' : 'text-gray-800'}`}>
+                {registrationStatusLabel[registration?.status || ''] || 'Status Desconhecido'}
               </h3>
-              <p className={`${paid ? 'text-green-700' : 'text-yellow-700'} mb-4`}>
-                {paid 
-                  ? 'Seu pagamento foi processado com sucesso. Você receberá o QR Code de acesso por e-mail.'
-                  : `Lembre-se de efetuar o pagamento até ${formatDate(event.finalDatePayment)} para garantir sua vaga.`
-                }
+              <p className={`${registration?.status === 'CONFIRMED' ? 'text-green-700' : registration?.status === 'PENDING' ? 'text-yellow-700' : 'text-gray-700'} mb-4`}>
+                {registration?.status === 'CONFIRMED'
+                  ? 'Sua inscrição está confirmada! Você receberá o QR Code de acesso por e-mail.'
+                  : registration?.status === 'PENDING'
+                  ? `Lembre-se de efetuar o pagamento até ${formatDate(event.finalDatePayment)} para garantir sua vaga.`
+                  : 'Consulte os organizadores para mais informações.'}
               </p>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className={`font-medium ${paid ? 'text-green-800' : 'text-yellow-800'}`}>
-                    Status: 
+                  <span className={`font-medium ${registration?.status === 'CONFIRMED' ? 'text-green-800' : registration?.status === 'PENDING' ? 'text-yellow-800' : 'text-gray-800'}`}>
+                    Status:
                   </span>
-                  <Badge className={`ml-2 ${
-                    paid 
-                      ? 'bg-green-100 text-green-800 border-green-200' 
-                      : 'bg-yellow-100 text-yellow-800 border-yellow-200'
-                  }`}>
-                    {paid ? 'Confirmado' : 'Pendente'}
+                  <Badge className={`ml-2 ${registration?.status === 'CONFIRMED' ? 'bg-green-100 text-green-800 border-green-200' : registration?.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' : 'bg-gray-100 text-gray-800 border-gray-200'}`}>
+                    {registrationStatusLabel[registration?.status || ''] || registration?.status}
                   </Badge>
                 </div>
                 <div>
-                  <span className={`font-medium ${paid ? 'text-green-800' : 'text-yellow-800'}`}>
-                    Inscrição: 
+                  <span className={`font-medium ${registration?.status === 'CONFIRMED' ? 'text-green-800' : registration?.status === 'PENDING' ? 'text-yellow-800' : 'text-gray-800'}`}>
+                    Inscrição:
                   </span>
-                  <span className={`ml-2 font-mono ${paid ? 'text-green-700' : 'text-yellow-700'}`}>
+                  <span className={`ml-2 font-mono ${registration?.status === 'CONFIRMED' ? 'text-green-700' : registration?.status === 'PENDING' ? 'text-yellow-700' : 'text-gray-700'}`}>
                     #{registrationId?.slice(-8)}
                   </span>
                 </div>
@@ -435,6 +461,48 @@ export default function ConfirmationPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Payment Status Details */}
+      {paymentInfo && (
+        <Card className="border-gray-200 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-lg text-gray-900 flex items-center space-x-2">
+              <CreditCard className="h-5 w-5 text-orange-600" />
+              <span>Status do Pagamento</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="font-medium text-gray-900">Status:</span>
+                <Badge className="ml-2">
+                  {paymentStatusLabel[paymentInfo.status] || paymentInfo.status}
+                </Badge>
+              </div>
+              {paymentInfo.amount !== undefined && (
+                <div>
+                  <span className="font-medium text-gray-900">Valor Pago:</span>
+                  <span className="ml-2 font-semibold text-orange-600">
+                    {formatPrice(paymentInfo.amount)}
+                  </span>
+                </div>
+              )}
+              {paymentInfo.installments !== undefined && (
+                <div>
+                  <span className="font-medium text-gray-900">Parcelas:</span>
+                  <span className="ml-2">{paymentInfo.installments}</span>
+                </div>
+              )}
+              {paymentInfo.discountCouponId && (
+                <div>
+                  <span className="font-medium text-gray-900">Cupom de Desconto:</span>
+                  <span className="ml-2">{paymentInfo.discountCouponId}</span>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Registration Details */}
       <Card className="border-gray-200 shadow-sm">
@@ -667,8 +735,8 @@ export default function ConfirmationPage() {
         </CardContent>
       </Card>
 
-      {/* Payment Buttons for Unpaid Events */}
-      {!paid && !event.isFree && getCurrentBatch() && (
+      {/* Cards de pagamento */}
+      {registration?.status !== 'CONFIRMED' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Pay Now */}
           <Card className="border-green-200 hover:border-green-300 transition-colors">
@@ -680,7 +748,7 @@ export default function ConfirmationPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-gray-700 text-sm">
-                Finalize seu pagamento agora e garanta sua vaga imediatamente no evento.
+                Garanta sua vaga realizando o pagamento agora mesmo.
               </p>
               <div className="text-center p-4 bg-green-50 border border-green-200 rounded-lg">
                 <div className="text-2xl font-bold text-green-700 mb-1">
@@ -751,17 +819,18 @@ export default function ConfirmationPage() {
           <Share2 className="h-4 w-4 mr-2" />
           Compartilhar Evento
         </Button>
+      </div>
 
-        {paid && (
-          <Button
-            onClick={handlePrintRegistration}
-            variant="outline"
-            className="flex-1 border-green-600 text-green-600 hover:bg-green-50 py-3"
-          >
-            <QrCode className="h-4 w-4 mr-2" />
-            Imprimir Inscrição e QRCode
-          </Button>
-        )}
+      {/* Imprimir inscrição e QRCode */}
+      <div className="flex flex-col sm:flex-row gap-4 my-4">
+        <Button
+          onClick={handlePrintRegistration}
+          variant="outline"
+          className="flex-1 border-green-600 text-green-600 hover:bg-green-50 py-3"
+        >
+          <QrCode className="h-4 w-4 mr-2" />
+          Imprimir inscrição e QRCode
+        </Button>
       </div>
 
       {/* Support */}

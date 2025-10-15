@@ -52,6 +52,46 @@ export const getPaymentsPage = async (
 };
 
 // Tipos e interfaces para processamento de pagamento
+export type PaymentStatus =
+  | 'PENDING'
+  | 'INPROCESS'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'FAILED'
+  | 'CANCELLED'
+  | 'REFUNDED'
+  | 'EXPIRED'
+  | 'CHARGEBACK';
+
+export interface SubscriptionPaymentInfo {
+  status: PaymentStatus;
+  discountCouponId?: string;
+  amount?: number;
+  installments?: number;
+}
+
+export const getSubscriptionPaymentStatus = async (
+  registrationId: string
+): Promise<SubscriptionPaymentInfo> => {
+  try {
+    const token = localStorage.getItem('accessToken');
+    const response = await axios.get(
+      `http://localhost:8001/rest/v1/payments/queries/subscription-payment/${registrationId}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    console.error('Erro ao buscar status do pagamento:', error);
+    throw new Error(
+      error?.response?.data?.message ||
+        'Erro ao buscar status do pagamento!'
+    );
+  }
+};
 export type PaymentType = "CREDIT_CARD" | "INVOICE" | "PIX";
 export type PaymentProvider = "AD_EVENTOS";
 
