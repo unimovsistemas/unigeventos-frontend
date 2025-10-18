@@ -69,7 +69,16 @@ export default function EditProfilePage() {
   }
 
   if (!person) {
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-orange-500 mb-4">Este usuário não possui uma pessoa associada.</p>
+          <Button onClick={() => router.push("/dashboard")} className="bg-orange-500">
+            Voltar ao Dashboard
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   return (

@@ -61,7 +61,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             Agendamentos
           </NavItem>
           <NavItem href="/persons" icon={<Users size={18} />}>
-            Usuários
+            Pessoas
           </NavItem>
           <NavItem href="/checkins" icon={<CheckCircleIcon size={18} />}>
             Checkins
@@ -173,9 +173,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               <DropdownMenuItem asChild>
                 <Link
                   className="flex items-center justify-start gap-2"
-                  href="/users"
+                  href="/persons"
                 >
-                  {<Users size={14} />} Usuários
+                  {<Users size={14} />} Pessoas
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>

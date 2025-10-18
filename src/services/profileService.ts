@@ -45,7 +45,7 @@ export const updateCurrentUserPerson = async (
   payload: UpdatePersonPayload
 ): Promise<PersonResponse> => {
   try {
-    const response = await axios.put(`${API_URL}/entities/{id}`, payload, {
+    const response = await axios.post(`${API_URL}/actions/update-profile`, payload, {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
@@ -68,7 +68,7 @@ export const uploadProfilePhoto = async (
 ): Promise<string> => {
   try {
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("photoData", file); // Corrigido: mudou de "file" para "photoData"
 
     const response = await axios.post(`${API_URL}/actions/upload-photo`, formData, {
       headers: {
