@@ -102,7 +102,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-[#444]" />
               <DropdownMenuItem className="text-red-500 hover:text-red-600">
-                Sair
+                <Link href="/logout">Sair</Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
