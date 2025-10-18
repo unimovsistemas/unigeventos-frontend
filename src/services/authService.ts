@@ -26,7 +26,13 @@ export const login = async (username: string, password: string) => {
 };
 
 export const logout = async (refreshToken: string) => {
-  await axios.post(`${API_URL}/logout`, { refreshToken });
+  try {
+    await axios.post(`${API_URL}/logout`, { 
+      request: refreshToken 
+    });
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Erro ao fazer logout');
+  }
 };
 
 export const refreshToken = async (refreshToken: string) => {

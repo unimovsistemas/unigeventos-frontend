@@ -26,9 +26,11 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import WeatherWidget from "@/components/ui/weather-widget";
+import { useLogout } from "@/hooks/useLogout";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const [isSidebarOpen, setSidebarOpen] = useState(false); // Controle do estado do menu lateral
+  const { performLogout } = useLogout();
 
   return (
     <div className="min-h-screen flex bg-[#1e1e1e] text-neutral-200">
@@ -101,8 +103,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 <Link href="/edit-profile">Editar Dados</Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-[#444]" />
-              <DropdownMenuItem className="text-red-500 hover:text-red-600">
-                <Link href="/logout">Sair</Link>
+              <DropdownMenuItem 
+                className="text-red-500 hover:text-red-600 cursor-pointer"
+                onClick={performLogout}
+              >
+                Sair
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
