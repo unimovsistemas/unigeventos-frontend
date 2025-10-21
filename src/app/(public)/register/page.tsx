@@ -20,6 +20,8 @@ import { DocumentTypeSelect } from "@/components/registration/DocumentTypeSelect
 import { MathCaptcha } from "@/components/ui/math-captcha";
 import { usePhoneMask, useEmailValidation, useDocumentMask } from "@/hooks/useFieldMasks";
 import { FormField } from "@/components/ui/form-field";
+import { PasswordField } from "@/components/ui/password-field";
+import { toast } from "react-toastify";
 
 export default function RegisterPage() {
   const [username, setUsername] = useState("");
@@ -161,11 +163,17 @@ export default function RegisterPage() {
         },
         accessToken
       );
-      setSuccessMessage(
-        "Cadastro finalizado com sucesso! Um e-mail de boas-vindas foi enviado."
-      );
-      const targetUrl = redirectUrl ? `/login?redirect=${encodeURIComponent(redirectUrl)}` : "/login";
-      router.push(targetUrl);
+      
+      toast.success("🎉 Cadastro finalizado com sucesso! Um e-mail de boas-vindas foi enviado.", {
+        position: "top-right",
+        autoClose: 5000,
+      });
+      
+      // Aguarda um pouco para o toast aparecer antes de redirecionar
+      setTimeout(() => {
+        const targetUrl = redirectUrl ? `/login?redirect=${encodeURIComponent(redirectUrl)}` : "/login";
+        router.push(targetUrl);
+      }, 1500);
     } catch (err: any) {
       setError(`Erro: ${err.message}`);
     } finally {
@@ -241,19 +249,14 @@ export default function RegisterPage() {
                 />
               </div>
               
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                  Senha
-                </label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Digite sua senha"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="h-12"
-                />
-              </div>
+              <PasswordField
+                label="Senha"
+                placeholder="Digite sua senha"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                helperText="Mínimo de 6 caracteres"
+                required
+              />
             </div>
 
             <Button

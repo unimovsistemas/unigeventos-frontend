@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { forgotPassword, resetPassword } from "@/services/authService";
 import { Loader2 } from "lucide-react";
+import { PasswordField } from "@/components/ui/password-field";
+import { toast } from "react-toastify";
 
 export default function PasswordRecovery() {
   const [step, setStep] = useState(1);
@@ -27,13 +29,16 @@ export default function PasswordRecovery() {
     try {
       const response = await forgotPassword(email);
       if (response?.status === 200) {
-        alert("Um e-mail de redefinição foi enviado para " + email);
+        toast.success(`E-mail de redefinição enviado para ${email}`, {
+          position: "top-right",
+          autoClose: 5000,
+        });
         setStep(2);
       } else {
-        setError("Erro ao enviar e-mail. Verifique se o e-mail está correto.");
+        toast.error("Erro ao enviar e-mail. Verifique se o e-mail está correto.");
       }
     } catch (error: any) {
-      setError(`Erro ao conectar com o servidor. Causa: ${error?.message}`);
+      toast.error(`Erro ao conectar com o servidor. Causa: ${error?.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -44,7 +49,7 @@ export default function PasswordRecovery() {
     setError("");
 
     if (newPassword !== confirmPassword) {
-      setError("As senhas não coincidem.");
+      toast.error("As senhas não coincidem.");
       setIsLoading(false);
       return;
     }
@@ -52,13 +57,18 @@ export default function PasswordRecovery() {
     try {
       const response = await resetPassword(token, newPassword);
       if (response?.status === 200) {
-        alert("Sua senha foi alterada com sucesso.");
-        router.push("/login");
+        toast.success("Sua senha foi alterada com sucesso!", {
+          position: "top-right",
+          autoClose: 3000,
+        });
+        setTimeout(() => {
+          router.push("/login");
+        }, 1000);
       } else {
-        setError("Token inválido ou senha não aceita.");
+        toast.error("Token inválido ou senha não aceita.");
       }
     } catch (error: any) {
-      setError(`Erro ao conectar com o servidor. Causa: ${error?.message}`);
+      toast.error(`Erro ao conectar com o servidor. Causa: ${error?.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -138,33 +148,22 @@ export default function PasswordRecovery() {
                     />
                   </div>
 
-                  <div>
-                    <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                      Nova Senha
-                    </label>
-                    <Input
-                      id="newPassword"
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="Digite sua nova senha"
-                      className="h-12"
-                    />
-                  </div>
+                  <PasswordField
+                    label="Nova Senha"
+                    placeholder="Digite sua nova senha"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    helperText="Mínimo de 6 caracteres"
+                    required
+                  />
 
-                  <div>
-                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                      Confirmar Nova Senha
-                    </label>
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Confirme sua nova senha"
-                      className="h-12"
-                    />
-                  </div>
+                  <PasswordField
+                    label="Confirmar Nova Senha"
+                    placeholder="Confirme sua nova senha"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                  />
                 </div>
 
                 <Button

@@ -9,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@components/ui/card";
 import { login } from "../../../services/authService"; // Importando o serviço de autenticação
 import { Loader2 } from "lucide-react";
 import { MathCaptcha } from "@/components/ui/math-captcha";
+import { PasswordField } from "@/components/ui/password-field";
+import { toast } from "react-toastify";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -22,7 +24,7 @@ export default function LoginPage() {
   const handleLogin = async () => {
     // Validação do captcha
     if (!isCaptchaValid) {
-      setError("Por favor, resolva a operação matemática de verificação.");
+      toast.warning("Por favor, resolva a operação matemática para continuar.");
       return;
     }
 
@@ -90,19 +92,13 @@ export default function LoginPage() {
                 />
               </div>
               
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                  Senha
-                </label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Digite sua senha"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="h-12"
-                />
-              </div>
+              <PasswordField
+                label="Senha"
+                placeholder="Digite sua senha"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
             </div>
 
             {/* Captcha de Segurança */}
