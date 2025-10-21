@@ -52,6 +52,20 @@ export default function RegisterPage() {
   const { validateEmail, normalizeEmail } = useEmailValidation();
   const { formatDocument, validateDocument, getDocumentPlaceholder } = useDocumentMask();
 
+  // Handler para pressionar Enter no último step
+  const handleKeyPressOnLastStep = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && step === 4) {
+      e.preventDefault();
+      
+      // Só permite finalizar cadastro se não estiver carregando e captcha estiver válido
+      const canFinish = !isLoading && isCaptchaValid;
+      
+      if (canFinish) {
+        handleFinalStep();
+      }
+    }
+  };
+
   const formatCPF = (value: string) => {
     return value
       .replace(/\D/g, "")
@@ -456,6 +470,7 @@ export default function RegisterPage() {
                     number: rawValue,
                   });
                 }}
+                onKeyDown={handleKeyPressOnLastStep}
                 required
                 error={document.number && document.documentType && !validateDocument(document.number, document.documentType as 'CPF' | 'RG') ? 
                   `${document.documentType} inválido` : undefined}

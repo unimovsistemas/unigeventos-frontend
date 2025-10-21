@@ -36,6 +36,20 @@ export default function LoginPage() {
     setShowCaptcha(username.trim() !== "" && password.trim() !== "");
   }, [username, password]);
 
+  // Handler para pressionar Enter
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      
+      // Só permite login se não estiver carregando e se o captcha estiver válido (quando visível)
+      const canLogin = !isLoading && (!showCaptcha || isTurnstileValid);
+      
+      if (canLogin) {
+        handleLogin();
+      }
+    }
+  };
+
   const handleLogin = async () => {
     // Validação do captcha apenas se estiver visível
     if (showCaptcha && !isTurnstileValid) {
@@ -103,6 +117,7 @@ export default function LoginPage() {
                   placeholder="Digite seu usuário"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
+                  onKeyDown={handleKeyPress}
                   className="h-12"
                 />
               </div>
@@ -112,6 +127,7 @@ export default function LoginPage() {
                 placeholder="Digite sua senha"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={handleKeyPress}
                 required
               />
             </div>
