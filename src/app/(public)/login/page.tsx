@@ -8,16 +8,24 @@ import { Button } from "@components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@components/ui/card";
 import { login } from "../../../services/authService"; // Importando o serviço de autenticação
 import { Loader2 } from "lucide-react";
+import { MathCaptcha } from "@/components/ui/math-captcha";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isCaptchaValid, setIsCaptchaValid] = useState(false);
   const searchParams = useSearchParams();
   const redirectUrl = searchParams.get('redirect');
 
   const handleLogin = async () => {
+    // Validação do captcha
+    if (!isCaptchaValid) {
+      setError("Por favor, resolva a operação matemática de verificação.");
+      return;
+    }
+
     setIsLoading(true);
     try {
       const response = await login(username, password);
@@ -97,11 +105,17 @@ export default function LoginPage() {
               </div>
             </div>
 
+            {/* Captcha de Segurança */}
+            <MathCaptcha
+              onValidationChange={setIsCaptchaValid}
+              error={!isCaptchaValid && error?.includes("operação matemática") ? "Resolva a operação matemática para continuar" : undefined}
+            />
+
             <Button
               onClick={handleLogin}
               size="lg"
               className="w-full h-12 bg-orange-600 hover:bg-orange-700 text-white font-medium transition-all duration-300"
-              disabled={isLoading}
+              disabled={isLoading || !isCaptchaValid}
             >
               {isLoading ? (
                 <>

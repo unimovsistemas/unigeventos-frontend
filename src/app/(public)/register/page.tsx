@@ -10,10 +10,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@components/ui/card";
 import { useRouter } from "next/navigation";
 import { registerUser } from "@services/authService";
 import { registerPerson } from "@/services/registerPersonService";
-import Select from "@/components/ui/select";
 import Toggle from "@components/ui/toggle";
 import { Loader2 } from "lucide-react";
 import { InputMask } from "@react-input/mask";
+import { GenderSelect } from "@/components/registration/GenderSelect";
+import { MaritalStatusSelect } from "@/components/registration/MaritalStatusSelect";
+import { VoiceTypeSelect } from "@/components/registration/VoiceTypeSelect";
+import { DocumentTypeSelect } from "@/components/registration/DocumentTypeSelect";
+import { MathCaptcha } from "@/components/ui/math-captcha";
+import { usePhoneMask, useEmailValidation, useDocumentMask } from "@/hooks/useFieldMasks";
+import { FormField } from "@/components/ui/form-field";
 
 export default function RegisterPage() {
   const [username, setUsername] = useState("");
@@ -34,9 +40,15 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isCaptchaValid, setIsCaptchaValid] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectUrl = searchParams.get('redirect');
+
+  // Hooks for field formatting and validation
+  const { formatPhone, validatePhone } = usePhoneMask();
+  const { validateEmail, normalizeEmail } = useEmailValidation();
+  const { formatDocument, validateDocument, getDocumentPlaceholder } = useDocumentMask();
 
   const formatCPF = (value: string) => {
     return value
@@ -80,6 +92,7 @@ export default function RegisterPage() {
     setError("");
     setIsLoading(true);
 
+    // Validações dos campos obrigatórios
     if (
       !name ||
       !birthdateInput ||
@@ -89,6 +102,32 @@ export default function RegisterPage() {
       !document.number
     ) {
       setError("Por favor, preencha todos os campos obrigatórios.");
+      setIsLoading(false);
+      return;
+    }
+
+    // Validações específicas dos campos
+    if (!validateEmail(contact.email)) {
+      setError("Por favor, digite um e-mail válido.");
+      setIsLoading(false);
+      return;
+    }
+
+    if (contact.phoneNumber && !validatePhone(contact.phoneNumber)) {
+      setError("Por favor, digite um telefone válido.");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!validateDocument(document.number, document.documentType as 'CPF' | 'RG')) {
+      setError(`Por favor, digite um ${document.documentType} válido.`);
+      setIsLoading(false);
+      return;
+    }
+
+    // Validação do captcha
+    if (!isCaptchaValid) {
+      setError("Por favor, resolva a operação matemática de verificação.");
       setIsLoading(false);
       return;
     }
@@ -273,37 +312,15 @@ export default function RegisterPage() {
                 />
               </div>
               
-              <div>
-                <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-2">
-                  Gênero *
-                </label>
-                <Select
-                  options={[
-                    { label: "Masculino", value: "MALE" },
-                    { label: "Feminino", value: "FEMALE" },
-                  ]}
-                  value={gender}
-                  onChange={setGender}
-                  placeholder="Selecione seu gênero"
-                />
-              </div>
+              <GenderSelect
+                value={gender}
+                onChange={setGender}
+              />
               
-              <div>
-                <label htmlFor="maritalStatus" className="block text-sm font-medium text-gray-700 mb-2">
-                  Estado Civil
-                </label>
-                <Select
-                  options={[
-                    { label: "Solteiro", value: "SINGLE" },
-                    { label: "Casado", value: "MARRIED" },
-                    { label: "Divorciado", value: "DIVORCED" },
-                    { label: "Prefiro não informar", value: "NOT_INFORMED" },
-                  ]}
-                  value={maritalStatus}
-                  onChange={setMaritalStatus}
-                  placeholder="Selecione seu estado civil"
-                />
-              </div>
+              <MaritalStatusSelect
+                value={maritalStatus}
+                onChange={setMaritalStatus}
+              />
             </div>
 
             <div className="flex gap-3">
@@ -353,23 +370,10 @@ export default function RegisterPage() {
                 />
               </div>
               
-              <div>
-                <label htmlFor="choralVoiceType" className="block text-sm font-medium text-gray-700 mb-2">
-                  Tipo de Voz (Coral)
-                </label>
-                <Select
-                  options={[
-                    { label: "Tenor", value: "TENOR" },
-                    { label: "Baixo", value: "BASS" },
-                    { label: "Contralto", value: "CONTRALTO" },
-                    { label: "Soprano", value: "SOPRANO" },
-                    { label: "Prefiro não responder", value: "NOT_INFORMED" },
-                  ]}
-                  value={choralVoiceType}
-                  onChange={setChoralVoiceType}
-                  placeholder="Selecione seu tipo de voz"
-                />
-              </div>
+              <VoiceTypeSelect
+                value={choralVoiceType}
+                onChange={setChoralVoiceType}
+              />
               
               <div className="flex items-center justify-between border rounded-lg p-4 bg-gray-50">
                 <div>
@@ -405,72 +409,60 @@ export default function RegisterPage() {
         {step === 4 && (
           <>
             <div className="space-y-4">
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                  Telefone
-                </label>
-                <Input
-                  id="phone"
-                  placeholder="(11) 99999-9999"
-                  value={contact.phoneNumber}
-                  onChange={(e) =>
-                    setContact({ ...contact, phoneNumber: e.target.value })
-                  }
-                  className="h-12"
-                />
-              </div>
+              <FormField
+                label="Telefone"
+                placeholder="(11) 99999-9999"
+                value={formatPhone(contact.phoneNumber)}
+                onChange={(e) => {
+                  const formatted = formatPhone(e.target.value);
+                  setContact({ ...contact, phoneNumber: formatted });
+                }}
+                helperText="Digite seu telefone com DDD"
+                error={contact.phoneNumber && !validatePhone(contact.phoneNumber) ? "Telefone inválido" : undefined}
+              />
               
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                  E-mail *
-                </label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="seu@email.com"
-                  value={contact.email}
-                  onChange={(e) =>
-                    setContact({ ...contact, email: e.target.value })
-                  }
-                  className="h-12"
-                />
-              </div>
+              <FormField
+                label="E-mail"
+                type="email"
+                placeholder="seu@email.com"
+                value={contact.email}
+                onChange={(e) => {
+                  const normalized = normalizeEmail(e.target.value);
+                  setContact({ ...contact, email: normalized });
+                }}
+                required
+                error={contact.email && !validateEmail(contact.email) ? "E-mail inválido" : undefined}
+              />
               
-              <div>
-                <label htmlFor="documentType" className="block text-sm font-medium text-gray-700 mb-2">
-                  Tipo de Documento *
-                </label>
-                <Select
-                  options={[
-                    { label: "CPF", value: "CPF" },
-                    { label: "RG", value: "RG" },
-                  ]}
-                  value={document.documentType}
-                  onChange={(value) =>
-                    setDocument({ ...document, documentType: value })
-                  }
-                  placeholder="Selecione o tipo de documento"
-                />
-              </div>
+              <DocumentTypeSelect
+                value={document.documentType}
+                onChange={(value) => {
+                  setDocument({ ...document, documentType: value, number: "" });
+                }}
+              />
               
-              <div>
-                <label htmlFor="documentNumber" className="block text-sm font-medium text-gray-700 mb-2">
-                  Número do Documento *
-                </label>
-                <Input
-                  id="documentNumber"
-                  placeholder={document.documentType === "CPF" ? "000.000.000-00" : "Número do documento"}
-                  value={document.documentType === "CPF" ? formatCPF(document.number) : document.number}
-                  disabled={!document.documentType}
-                  onChange={(e) =>
-                    setDocument({
-                      ...document,
-                      number: e.target.value.replace(/\D/g, ""),
-                    })
-                  }
-                  className="h-12"
-                />
-              </div>
+              <FormField
+                label="Número do Documento"
+                placeholder={getDocumentPlaceholder(document.documentType as 'CPF' | 'RG')}
+                value={document.documentType ? formatDocument(document.number, document.documentType as 'CPF' | 'RG') : document.number}
+                disabled={!document.documentType}
+                onChange={(e) => {
+                  const rawValue = e.target.value.replace(/\D/g, "");
+                  setDocument({
+                    ...document,
+                    number: rawValue,
+                  });
+                }}
+                required
+                error={document.number && document.documentType && !validateDocument(document.number, document.documentType as 'CPF' | 'RG') ? 
+                  `${document.documentType} inválido` : undefined}
+              />
+
+              {/* Captcha de Segurança */}
+              <MathCaptcha
+                onValidationChange={setIsCaptchaValid}
+                error={!isCaptchaValid && step === 4 ? "Resolva a operação matemática para continuar" : undefined}
+              />
             </div>
 
             <div className="flex gap-3">
@@ -483,8 +475,8 @@ export default function RegisterPage() {
               </Button>
               <Button
                 onClick={handleFinalStep}
-                disabled={isLoading}
-                className="flex-1 h-12 bg-orange-600 hover:bg-orange-700 text-white font-medium"
+                disabled={isLoading || !isCaptchaValid}
+                className="flex-1 h-12 bg-orange-600 hover:bg-orange-700 text-white font-medium disabled:opacity-50"
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center gap-2">
