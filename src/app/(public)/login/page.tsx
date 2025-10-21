@@ -39,64 +39,110 @@ export default function LoginPage() {
   };
 
   return (
-      <Card className="w-full max-w-md shadow-lg rounded-2xl border border-gray-200 bg-white/80 backdrop-blur-lg p-6">
-        <CardHeader>
-          <CardTitle className="text-center text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">
-            Login
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {redirectUrl && (
-            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-center">
-              <p className="text-orange-700 text-sm">
-                Faça login para continuar com sua inscrição no evento
-              </p>
-            </div>
-          )}
-          {error && (
-            <p className="text-red-600 text-sm text-center mb-3">{error}</p>
-          )}
-          <Input
-            placeholder="Usuário"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-          <Input
-            type="password"
-            placeholder="Senha"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <Button
-            onClick={handleLogin}
-            size="lg"
-            className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-medium transition-all duration-300"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Entrando...
-              </>
-            ) : (
-              "Entrar"
+    <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
+      <div className="w-full max-w-md space-y-6">
+        {/* Header Section */}
+        <div className="text-center space-y-2">
+          <h1 className="text-3xl font-bold text-gray-900">
+            Bem-vindo de volta!
+          </h1>
+          <p className="text-gray-600">
+            Faça login para acessar sua conta
+          </p>
+        </div>
+
+        {/* Login Card */}
+        <Card className="w-full shadow-xl border-0 bg-white">
+          <CardContent className="p-8 space-y-6">
+            {redirectUrl && (
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-center">
+                <p className="text-orange-700 text-sm font-medium">
+                  Faça login para continuar com sua inscrição no evento
+                </p>
+              </div>
             )}
-          </Button>
-          <div className="flex justify-between mt-6 text-sm w-full">
-            <a
-              href="/forgot-password"
-              className="text-orange-500 hover:underline"
+            
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+                <p className="text-red-700 text-sm font-medium">{error}</p>
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
+                  Usuário
+                </label>
+                <Input
+                  id="username"
+                  placeholder="Digite seu usuário"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="h-12"
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                  Senha
+                </label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Digite sua senha"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="h-12"
+                />
+              </div>
+            </div>
+
+            <Button
+              onClick={handleLogin}
+              size="lg"
+              className="w-full h-12 bg-orange-600 hover:bg-orange-700 text-white font-medium transition-all duration-300"
+              disabled={isLoading}
             >
-              Esqueci a senha
-            </a>
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Entrando...
+                </>
+              ) : (
+                "Entrar"
+              )}
+            </Button>
+
+            <div className="flex justify-between items-center text-sm">
+              <a
+                href="/forgot-password"
+                className="text-orange-600 hover:text-orange-700 hover:underline font-medium"
+              >
+                Esqueci minha senha
+              </a>
+              <a 
+                href={redirectUrl ? `/register?redirect=${encodeURIComponent(redirectUrl)}` : "/register"} 
+                className="text-orange-600 hover:text-orange-700 hover:underline font-medium"
+              >
+                Criar conta
+              </a>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Additional Info */}
+        <div className="text-center text-sm text-gray-500">
+          <p>
+            Ainda não tem uma conta?{" "}
             <a 
-              href={redirectUrl ? `/register?redirect=${encodeURIComponent(redirectUrl)}` : "/register"} 
-              className="text-orange-500 hover:underline"
+              href={redirectUrl ? `/register?redirect=${encodeURIComponent(redirectUrl)}` : "/register"}
+              className="text-orange-600 hover:text-orange-700 font-medium hover:underline"
             >
-              Criar conta
+              Cadastre-se gratuitamente
             </a>
-          </div>
-        </CardContent>
-      </Card>
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }
