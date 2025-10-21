@@ -8,8 +8,9 @@ import { Button } from "@components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@components/ui/card";
 import { login } from "../../../services/authService"; // Importando o serviço de autenticação
 import { Loader2 } from "lucide-react";
-import { MathCaptcha } from "@/components/ui/math-captcha";
+import { CloudflareTurnstile } from "@/components/ui/cloudflare-turnstile";
 import { PasswordField } from "@/components/ui/password-field";
+import { useTurnstile } from "@/hooks/useTurnstile";
 import { toast } from "react-toastify";
 
 export default function LoginPage() {
@@ -17,14 +18,28 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isCaptchaValid, setIsCaptchaValid] = useState(false);
+  const [showCaptcha, setShowCaptcha] = useState(false);
+  
   const searchParams = useSearchParams();
   const redirectUrl = searchParams.get('redirect');
+  
+  const { 
+    turnstileToken, 
+    turnstileError, 
+    handleTurnstileSuccess, 
+    handleTurnstileError, 
+    isTurnstileValid 
+  } = useTurnstile();
+
+  // Mostrar captcha apenas quando usuário e senha estiverem preenchidos
+  useEffect(() => {
+    setShowCaptcha(username.trim() !== "" && password.trim() !== "");
+  }, [username, password]);
 
   const handleLogin = async () => {
-    // Validação do captcha
-    if (!isCaptchaValid) {
-      toast.warning("Por favor, resolva a operação matemática para continuar.");
+    // Validação do captcha apenas se estiver visível
+    if (showCaptcha && !isTurnstileValid) {
+      toast.warning("Por favor, complete a verificação de segurança para continuar.");
       return;
     }
 
@@ -101,17 +116,32 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* Captcha de Segurança */}
-            <MathCaptcha
-              onValidationChange={setIsCaptchaValid}
-              error={!isCaptchaValid && error?.includes("operação matemática") ? "Resolva a operação matemática para continuar" : undefined}
-            />
+            {/* Captcha de Segurança - Cloudflare Turnstile */}
+            {showCaptcha && (
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Verificação de Segurança
+                </label>
+                <CloudflareTurnstile
+                  siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "1x00000000000000000000AA"}
+                  onSuccess={handleTurnstileSuccess}
+                  onError={handleTurnstileError}
+                  theme="light"
+                  size="normal"
+                />
+                {turnstileError && (
+                  <p className="text-red-600 text-sm">
+                    Erro na verificação de segurança. Tente novamente.
+                  </p>
+                )}
+              </div>
+            )}
 
             <Button
               onClick={handleLogin}
               size="lg"
               className="w-full h-12 bg-orange-600 hover:bg-orange-700 text-white font-medium transition-all duration-300"
-              disabled={isLoading || !isCaptchaValid}
+              disabled={isLoading || (showCaptcha && !isTurnstileValid)}
             >
               {isLoading ? (
                 <>
