@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import axios from "axios";
+import { authApi } from '@/lib/apiClient';
 import { PersonResponse } from "./personService";
-
-const API_URL = "http://localhost:8001/rest/v1/persons";
 
 export interface UpdatePersonPayload {
   name: string;
@@ -20,15 +18,9 @@ export interface UpdatePersonPayload {
 /**
  * Busca os dados da pessoa do usuário logado
  */
-export const getCurrentUserPerson = async (
-  token: string
-): Promise<PersonResponse> => {
+export const getCurrentUserPerson = async (): Promise<PersonResponse> => {
   try {
-    const response = await axios.get(`${API_URL}/queries/get-my-profile`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await authApi.get<PersonResponse>(`/persons/queries/get-my-profile`);
     return response.data;
   } catch (error: any) {
     throw new Error(
@@ -41,16 +33,10 @@ export const getCurrentUserPerson = async (
  * Atualiza os dados da pessoa do usuário logado
  */
 export const updateCurrentUserPerson = async (
-  token: string,
   payload: UpdatePersonPayload
 ): Promise<PersonResponse> => {
   try {
-    const response = await axios.post(`${API_URL}/actions/update-profile`, payload, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
+    const response = await authApi.post<PersonResponse>(`/persons/actions/update-profile`, payload);
     return response.data;
   } catch (error: any) {
     throw new Error(
@@ -63,16 +49,14 @@ export const updateCurrentUserPerson = async (
  * Upload de foto de perfil
  */
 export const uploadProfilePhoto = async (
-  token: string,
   file: File
 ): Promise<string> => {
   try {
     const formData = new FormData();
     formData.append("photoData", file); // Corrigido: mudou de "file" para "photoData"
 
-    const response = await axios.post(`${API_URL}/actions/upload-photo`, formData, {
+    const response = await authApi.post(`/persons/actions/upload-photo`, formData, {
       headers: {
-        Authorization: `Bearer ${token}`,
         "Content-Type": "multipart/form-data",
       },
     });

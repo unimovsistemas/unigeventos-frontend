@@ -36,23 +36,12 @@ export function useOrganizers() {
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
 
-  const getToken = useCallback(() => {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem("accessToken");
-  }, []);
-
   const fetchOrganizers = useCallback(async (page: number = 0, size: number = 6) => {
-    const token = getToken();
-    if (!token) {
-      setError("Token de acesso não encontrado");
-      return;
-    }
-
     try {
       setLoading(true);
       setError(null);
       
-      const response: PageResponse<Organizer> = await getAllPage(token, page, size);
+      const response: PageResponse<Organizer> = await getAllPage(page, size);
       
       setOrganizers(response.content || []);
       setTotalPages(response.totalPages);
@@ -65,7 +54,7 @@ export function useOrganizers() {
     } finally {
       setLoading(false);
     }
-  }, [getToken]);
+  }, []);
 
   const refreshOrganizers = useCallback(() => {
     fetchOrganizers(currentPage);
@@ -109,25 +98,14 @@ export function useOrganizer(id?: string) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const getToken = useCallback(() => {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem("accessToken");
-  }, []);
-
   const fetchOrganizer = useCallback(async () => {
     if (!id) return;
-    
-    const token = getToken();
-    if (!token) {
-      setError("Token de acesso não encontrado");
-      return;
-    }
 
     try {
       setLoading(true);
       setError(null);
       
-      const data = await getOrganizerById(token, id);
+      const data = await getOrganizerById(id);
       setOrganizer(data);
     } catch (err: any) {
       const errorMessage = err.message || "Erro ao carregar organizador";
@@ -136,43 +114,33 @@ export function useOrganizer(id?: string) {
     } finally {
       setLoading(false);
     }
-  }, [id, getToken]);
+  }, [id]);
 
   const createOrganizerMutation = useCallback(async (data: OrganizerFormData) => {
-    const token = getToken();
-    if (!token) {
-      throw new Error("Token de acesso não encontrado");
-    }
-
     try {
-      await createOrganizer(token, data);
+      await createOrganizer(data);
       toast.success("Organizador criado com sucesso!");
     } catch (err: any) {
       const errorMessage = err.message || "Erro ao criar organizador";
       toast.error(errorMessage);
       throw err;
     }
-  }, [getToken]);
+  }, []);
 
   const updateOrganizerMutation = useCallback(async (data: OrganizerFormData) => {
     if (!id) {
       throw new Error("ID do organizador não encontrado");
     }
-    
-    const token = getToken();
-    if (!token) {
-      throw new Error("Token de acesso não encontrado");
-    }
 
     try {
-      await updateOrganizer(token, id, data);
+      await updateOrganizer(id, data);
       toast.success("Organizador atualizado com sucesso!");
     } catch (err: any) {
       const errorMessage = err.message || "Erro ao atualizar organizador";
       toast.error(errorMessage);
       throw err;
     }
-  }, [id, getToken]);
+  }, [id]);
 
   useEffect(() => {
     if (id) {

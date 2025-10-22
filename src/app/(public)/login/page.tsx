@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Input } from "@components/ui/input";
 import { Button } from "@components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@components/ui/card";
@@ -11,6 +11,7 @@ import { Loader2 } from "lucide-react";
 import { CloudflareTurnstile } from "@/components/ui/cloudflare-turnstile";
 import { PasswordField } from "@/components/ui/password-field";
 import { useTurnstile } from "@/hooks/useTurnstile";
+import { PanelSelectionModal } from "@/components/ui/panel-selection-modal";
 import { toast } from "react-toastify";
 
 export default function LoginPage() {
@@ -19,8 +20,11 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showCaptcha, setShowCaptcha] = useState(false);
+  const [showPanelSelection, setShowPanelSelection] = useState(false);
+  const [userRoles, setUserRoles] = useState<string[]>([]);
   
   const searchParams = useSearchParams();
+  const router = useRouter();
   const redirectUrl = searchParams.get('redirect');
   
   const { 
@@ -50,6 +54,41 @@ export default function LoginPage() {
     }
   };
 
+  const handleRedirectAfterLogin = (roles: string[]) => {
+    const hasAdminRole = roles.includes('ROLE_ADMIN');
+    const hasUserRole = roles.includes('ROLE_USER') || roles.includes('ROLE_LEADER');
+
+    if (redirectUrl) {
+      // Se há URL de redirecionamento, usar ela
+      router.push(redirectUrl);
+      return;
+    }
+
+    if (hasAdminRole && hasUserRole) {
+      // Usuário tem ambos os roles - mostrar modal de seleção
+      setUserRoles(roles);
+      setShowPanelSelection(true);
+    } else if (hasAdminRole) {
+      // Apenas admin - ir para painel admin
+      router.push("/admin");
+    } else if (hasUserRole) {
+      // Apenas user/leader - ir para painel user
+      router.push("/user");
+    } else {
+      // Sem roles válidos - erro
+      setError("Usuário não possui permissões adequadas para acessar o sistema.");
+    }
+  };
+
+  const handlePanelSelection = (panel: 'admin' | 'user') => {
+    setShowPanelSelection(false);
+    if (panel === 'admin') {
+      router.push("/admin");
+    } else {
+      router.push("/user");
+    }
+  };
+
   const handleLogin = async () => {
     // Validação do captcha apenas se estiver visível
     if (showCaptcha && !isTurnstileValid) {
@@ -60,12 +99,12 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       const response = await login(username, password);
-      localStorage.setItem("accessToken", response.accessToken);
-      localStorage.setItem("refreshToken", response.refreshToken);
       
-      // Redireciona para a URL especificada ou para o dashboard
-      const targetUrl = redirectUrl || "/dashboard";
-      window.location.href = targetUrl;
+      // Aguardar um pouco para garantir que os cookies sejam definidos
+      setTimeout(() => {
+        // Redirecionar baseado nos roles
+        handleRedirectAfterLogin(response.roles);
+      }, 100);
     } catch (err: any) {
       const hasCausedBy = err.response != null && err.response.data != null;
       const errorMessage = hasCausedBy
@@ -199,6 +238,13 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
+
+      {/* Modal de Seleção de Painel */}
+      <PanelSelectionModal
+        isOpen={showPanelSelection}
+        onClose={() => setShowPanelSelection(false)}
+        onSelectPanel={handlePanelSelection}
+      />
     </div>
   );
 }

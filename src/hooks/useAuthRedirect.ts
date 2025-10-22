@@ -13,7 +13,7 @@ export function useAuthRedirect(): UseAuthRedirectReturn {
   const searchParams = useSearchParams();
   const redirectUrl = searchParams.get('redirect');
 
-  const handleSuccessfulAuth = useCallback((defaultPath: string = '/dashboard') => {
+  const handleSuccessfulAuth = useCallback((defaultPath: string = '/admin') => {
     const targetUrl = redirectUrl || defaultPath;
     
     // Use router.push for internal navigation, window.location for external or complex redirects

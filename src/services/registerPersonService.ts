@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // src/services/registerPersonService.ts
 
-import axios from 'axios';
+import { authApi } from '@/lib/apiClient';
 
 interface PersonRegistrationData {
   name: string;
@@ -22,17 +22,10 @@ interface PersonRegistrationData {
   };
 }
 
-const API_URL = "http://localhost:8001/rest/v1/persons";
-
 // Função para registrar os dados pessoais do usuário
-export const registerPerson = async (personData: PersonRegistrationData, accessToken: string): Promise<void> => {
-  console.log("Token enviado:", accessToken);
+export const registerPerson = async (personData: PersonRegistrationData): Promise<void> => {
   try {
-    await axios.post(`${API_URL}/actions/register`, personData, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    await authApi.post(`/persons/actions/register`, personData);
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Erro ao registrar dados pessoais');
   }

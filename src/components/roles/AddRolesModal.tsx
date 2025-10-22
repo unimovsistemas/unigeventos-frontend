@@ -45,18 +45,12 @@ export default function AddRolesModal({
 
   const handleSave = async () => {
     try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) {
-        toast.error("Token de acesso não encontrado.");
-        return;
-      }
-
       const rolesInput: RolesInput = { 
         userId: userId, 
         roles: selectedRoles
       }
       
-      await addUserRoles(token, userName, rolesInput);
+      await addUserRoles(userName, rolesInput);
       toast.success("Permissões adicionadas com sucesso.");
       onSuccess();
       onClose();

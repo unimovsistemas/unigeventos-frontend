@@ -23,14 +23,8 @@ export const useCoupons = () => {
   const fetchCoupons = useCallback(async (page: number = 0) => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("accessToken");
-      
-      if (!token) {
-        toast.error("Token de acesso não encontrado.");
-        return;
-      }
 
-      const response: PageResponse<CouponsResponse> = await getAllPage(token, page, 12);
+      const response: PageResponse<CouponsResponse> = await getAllPage(page, 12);
       
       setCoupons(response.content || []);
       setTotalPages(response.totalPages);

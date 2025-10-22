@@ -14,14 +14,8 @@ export const usePayments = () => {
   const fetchPayments = useCallback(async (page: number = 0) => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("accessToken");
-      
-      if (!token) {
-        toast.error("Token de acesso não encontrado.");
-        return;
-      }
 
-      const response: PageResponse<PaymentResponse> = await getPaymentsPage(token, page, 12);
+      const response: PageResponse<PaymentResponse> = await getPaymentsPage(page, 12);
       
       setPayments(response.content || []);
       setTotalPages(response.totalPages);
@@ -53,14 +47,7 @@ export const usePayments = () => {
 
   const applyDiscountToPayment = useCallback(async (paymentId: string, couponCode: string) => {
     try {
-      const token = localStorage.getItem("accessToken");
-      
-      if (!token) {
-        toast.error("Token de acesso não encontrado.");
-        return false;
-      }
-
-      await applyDiscount(token, paymentId, couponCode);
+      await applyDiscount(paymentId, couponCode);
       toast.success("Desconto aplicado com sucesso!");
       
       // Refresh the current page

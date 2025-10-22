@@ -1,23 +1,26 @@
 import { useRouter } from "next/navigation";
 import { logout } from "@/services/authService";
 import { toast } from "react-toastify";
+import CookieManager from "@/lib/cookieManager";
 
 export const useLogout = () => {
   const router = useRouter();
 
   const performLogout = async () => {
     try {
-      // Buscar refreshToken do localStorage
-      const refreshToken = localStorage.getItem("refreshToken");
-      
-      if (refreshToken) {
-        // Chamar endpoint de logout
-        await logout(refreshToken);
+      // Buscar refreshToken dos cookies (prioridade) ou localStorage (fallback)
+      let refreshToken = CookieManager.get("refreshToken");
+      if (!refreshToken) {
+        refreshToken = localStorage.getItem("refreshToken");
       }
+      
+      // Chamar endpoint de logout
+      await logout(refreshToken || undefined);
 
-      // Limpar todos os tokens do localStorage
+      // Limpar localStorage (fallback/legado)
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
+      localStorage.removeItem("userRoles");
       
       // Exibir mensagem de sucesso
       toast.success("Logout realizado com sucesso!");

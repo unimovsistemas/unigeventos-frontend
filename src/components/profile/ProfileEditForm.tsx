@@ -63,7 +63,7 @@ export default function ProfileEditForm({
     choralVoiceType: person.choralVoiceType,
     phoneNumber: person.contact?.phoneNumber || "",
     documentNumber: person.document?.number || "",
-    personalContactEmail: person.contact?.email || "",
+    personalContactEmail: person.personalContactEmail || "",
   });
 
   const [photoPreview, setPhotoPreview] = useState(person.photo || "");
@@ -125,14 +125,9 @@ export default function ProfileEditForm({
     setIsLoading(true);
 
     try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) {
-        throw new Error("Usuário não autenticado");
-      }
-
       // Upload da foto primeiro, se houver
       if (photoFile) {
-        await uploadProfilePhoto(token, photoFile);
+        await uploadProfilePhoto(photoFile);
         toast.success("Foto de perfil enviada com sucesso!");
       }
 
@@ -150,7 +145,7 @@ export default function ProfileEditForm({
         personalContactEmail: formData.personalContactEmail,
       };
 
-      await updateCurrentUserPerson(token, payload);
+      await updateCurrentUserPerson(payload);
 
       setSuccess("Perfil atualizado com sucesso!");
       toast.success("Perfil atualizado com sucesso!");
@@ -159,7 +154,7 @@ export default function ProfileEditForm({
         if (onSuccess) {
           onSuccess();
         } else {
-          router.push("/profile");
+          router.push("/user/profile");
         }
       }, 1500);
     } catch (err: unknown) {

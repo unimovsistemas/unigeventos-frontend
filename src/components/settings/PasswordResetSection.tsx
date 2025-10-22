@@ -73,19 +73,10 @@ export default function PasswordResetSection({
     setIsLoading(true);
 
     try {
-      // Recuperar o token do localStorage (ou de onde você armazena)
-      const token = localStorage.getItem("accessToken");
-      if (!token) {
-        throw new Error("Usuário não autenticado");
-      }
-
-      await changePassword(
-        {
-          currentPassword,
-          newPassword,
-        },
-        token
-      );
+      await changePassword({
+        currentPassword,
+        newPassword,
+      });
 
       setSuccess("Senha alterada com sucesso!");
       onSuccess?.();
