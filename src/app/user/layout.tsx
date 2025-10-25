@@ -13,6 +13,13 @@ import {
   UserCircle,
   Edit3,
   LogOut,
+  Subscript,
+  Bookmark,
+  BookmarkCheckIcon,
+  RssIcon,
+  LayoutIcon,
+  UserCheck2Icon,
+  UserCheckIcon,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import {
@@ -149,15 +156,12 @@ export default function UserLayout({ children }: { children: ReactNode }) {
 
             {/* Navigation */}
             <nav className="flex-1 px-4 pb-4 space-y-2">
-              <div className="mb-6">
-                <h2 className="px-4 mb-4 text-lg font-semibold text-gray-900">
-                  Menu Principal
-                </h2>
+              <div className="mb-6 mt-4">
                 <div className="space-y-1">
-                  <NavItem href="/user/dashboard" icon={<User size={20} />}>
+                  <NavItem href="/user/dashboard" icon={<LayoutIcon size={20} />}>
                     Dashboard
                   </NavItem>
-                  <NavItem href="/user/subscriptions" icon={<SubscriptIcon size={20} />}>
+                  <NavItem href="/user/subscriptions" icon={<UserCheckIcon size={20} />}>
                     Minhas Inscrições
                   </NavItem>
                   <NavItem href="/user/payments" icon={<CreditCard size={20} />}>

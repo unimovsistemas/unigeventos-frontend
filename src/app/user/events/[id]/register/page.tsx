@@ -16,7 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select } from '@/components/ui/select';
+import { TransportationSelect } from '@/components/registration/TransportationSelect';
 import { 
   Calendar, 
   MapPin, 
@@ -27,18 +27,9 @@ import {
   AlertCircle,
   User,
   CheckCircle,
-  Car,
-  Bus,
-  X,
   CreditCard
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-
-const transportationOptions: { value: TransportationType; label: string; icon: any }[] = [
-  { value: 'PERSONAL', label: 'Transporte Próprio', icon: Car },
-  { value: 'EVENT_TRANSPORT', label: 'Transporte do Evento', icon: Bus },
-  { value: 'NOT_APPLICABLE', label: 'Não se Aplica', icon: X }
-];
 
 export default function EventRegistrationPage() {
   const params = useParams();
@@ -297,23 +288,12 @@ export default function EventRegistrationPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Transportation Type */}
-            <div className="space-y-3">
-              <Label htmlFor="transportationType" className="text-sm font-medium text-gray-700">
-                Como você irá ao evento? *
-              </Label>
-              <Select
-                options={transportationOptions.map(option => ({
-                  label: option.label,
-                  value: option.value
-                }))}
-                value={formData.transportationType}
-                onChange={(value: string) => 
-                  handleInputChange('transportationType', value as TransportationType)
-                }
-                placeholder="Selecione o tipo de transporte"
-                className="w-full"
-              />
-            </div>
+            <TransportationSelect
+              value={formData.transportationType}
+              onChange={(value: TransportationType) => 
+                handleInputChange('transportationType', value)
+              }
+            />
 
             {/* Ministries */}
             <div className="space-y-3">

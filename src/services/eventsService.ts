@@ -55,6 +55,10 @@ export interface EventDataResponse extends EventData {
   organizer?: {
     id: string;
     name: string;
+    contact: {
+      email: string;
+      phone?: string;
+    };
   };
   numberOfSubscribers: number;
 }

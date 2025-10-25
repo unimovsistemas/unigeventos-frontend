@@ -19,7 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select } from '@/components/ui/select';
+import { PublicSelect } from '@/components/ui/public-select';
 import { 
   Calendar, 
   CreditCard, 
@@ -151,9 +151,9 @@ export default function PaymentPage() {
       // Se não for cartão de crédito, remover informações do cartão
       if (paymentType !== 'CREDIT_CARD') {
         delete paymentData.creditCardInfo;
-        delete paymentData.installments;
+        paymentData.installments = 1;
       }
-
+      
       const response = await processPayment(paymentData);
 
       // Redirecionar para confirmação com sucesso
@@ -331,7 +331,6 @@ export default function PaymentPage() {
           {currentBatch && (
             <div className="bg-orange-50 border border-orange-200 rounded-lg p-6">
               <div className="text-center">
-                <DollarSign className="h-8 w-8 text-orange-600 mx-auto mb-3" />
                 <div className="text-3xl font-bold text-orange-700 mb-2">
                   {formatPrice(currentBatch.price)}
                 </div>
@@ -542,7 +541,7 @@ export default function PaymentPage() {
                       <Label htmlFor="expirationMonth" className="text-sm font-medium text-gray-700">
                         Mês *
                       </Label>
-                      <Select
+                      <PublicSelect
                         options={Array.from({length: 12}, (_, i) => ({
                           value: String(i + 1).padStart(2, '0'),
                           label: String(i + 1).padStart(2, '0')
@@ -557,7 +556,7 @@ export default function PaymentPage() {
                       <Label htmlFor="expirationYear" className="text-sm font-medium text-gray-700">
                         Ano *
                       </Label>
-                      <Select
+                      <PublicSelect
                         options={Array.from({length: 10}, (_, i) => {
                           const year = new Date().getFullYear() + i;
                           return {
@@ -590,13 +589,14 @@ export default function PaymentPage() {
                       <Label htmlFor="installments" className="text-sm font-medium text-gray-700">
                         Parcelas *
                       </Label>
-                      <Select
+                      <PublicSelect
                         options={Array.from({length: 12}, (_, i) => ({
                           value: String(i + 1),
                           label: `${i + 1}x ${currentBatch ? formatPrice(currentBatch.price / (i + 1)) : ''}`
                         }))}
                         value={String(formData.installments || 1)}
                         onChange={(value) => handleInputChange('installments', Number(value))}
+                        placeholder="Selecione as parcelas"
                       />
                     </div>
                   </div>

@@ -154,8 +154,15 @@ export default function ConfirmationPage() {
   };
 
   const handlePayLater = () => {
-    // Apenas atualizar o status para mostrar como "reservado"
-    alert('Lembre-se de efetuar o pagamento até a data limite!');
+    router.push(`/user/dashboard`);
+  };
+
+  const handleContactOrganizers = () => {
+    if (!event) return;
+    const subject = `Dúvida sobre a inscrição no evento: ${event.name}`;
+    const mailtoLink = `mailto:${event.organizer?.contact?.email}?subject=${encodeURIComponent(subject)}`;
+    window
+      .open(mailtoLink, '_blank')
   };
 
   const handleShare = async () => {
@@ -309,6 +316,45 @@ export default function ConfirmationPage() {
               </div>
             </div>
           </div>
+
+          ${registration.discountCouponApplied ? `
+          <div class="section">
+            <div class="section-title">
+              💰 Cupom de Desconto Aplicado
+            </div>
+            <div class="section-content">
+              <div class="field-grid">
+                <div class="field">
+                  <div class="field-label">Código do Cupom:</div>
+                  <div class="field-value" style="font-family: monospace; background-color: #f3f4f6; padding: 4px 8px; border-radius: 4px; display: inline-block;">${registration.discountCouponApplied.code}</div>
+                </div>
+                <div class="field">
+                  <div class="field-label">Desconto:</div>
+                  <div class="field-value" style="color: #059669; font-weight: bold;">${registration.discountCouponApplied.discountPercentage}%</div>
+                </div>
+                ${registration.discountCouponApplied.description ? `
+                <div class="field" style="grid-column: 1/-1;">
+                  <div class="field-label">Descrição:</div>
+                  <div class="field-value">${registration.discountCouponApplied.description}</div>
+                </div>
+                ` : ''}
+                <div class="field">
+                  <div class="field-label">Valor Original:</div>
+                  <div class="field-value" style="text-decoration: line-through; color: #6b7280;">R$ ${registration.batch?.price?.toFixed(2).replace('.', ',') || '0,00'}</div>
+                </div>
+                <div class="field">
+                  <div class="field-label">Valor com Desconto:</div>
+                  <div class="field-value" style="color: #059669; font-weight: bold; font-size: 16px;">R$ ${registration.batch ? (registration.batch.price * (1 - registration.discountCouponApplied.discountPercentage / 100)).toFixed(2).replace('.', ',') : '0,00'}</div>
+                </div>
+                <div class="field" style="grid-column: 1/-1; text-align: center; background-color: #d1fae5; padding: 8px; border-radius: 8px; margin-top: 8px;">
+                  <div class="field-value" style="color: #059669; font-weight: bold;">
+                    Você economizou R$ ${registration.batch ? (registration.batch.price * (registration.discountCouponApplied.discountPercentage / 100)).toFixed(2).replace('.', ',') : '0,00'}!
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          ` : ''}
 
           ${(registration.ministries || registration.additionalInfo) ? `
           <div class="section">
@@ -493,12 +539,71 @@ export default function ConfirmationPage() {
                   <span className="ml-2">{paymentInfo.installments}</span>
                 </div>
               )}
-              {paymentInfo.discountCouponId && (
-                <div>
-                  <span className="font-medium text-gray-900">Cupom de Desconto:</span>
-                  <span className="ml-2">{paymentInfo.discountCouponId}</span>
+
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Discount Coupon Applied */}
+      {registration?.discountCouponApplied && (
+        <Card className="border-green-200 bg-green-50 shadow-sm">
+          <CardContent className="pt-6">
+            <div className="flex items-start space-x-3">
+              <div className="bg-green-100 p-2 rounded-full">
+                <div className="text-green-600 font-bold text-lg">%</div>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-green-800 mb-2 flex items-center space-x-2">
+                  <span>Cupom de Desconto Aplicado!</span>
+                  <Badge className="bg-green-600 text-white border-green-600">
+                    -{registration.discountCouponApplied.discountPercentage}%
+                  </Badge>
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium text-green-800">Código:</span>
+                    <div className="mt-1 font-mono bg-white px-3 py-1 rounded border border-green-200 text-green-700 inline-block">
+                      {registration.discountCouponApplied.code}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="font-medium text-green-800">Desconto:</span>
+                    <div className="mt-1 text-green-700 font-semibold">
+                      {registration.discountCouponApplied.discountPercentage}% de desconto
+                    </div>
+                  </div>
+                  {registration.discountCouponApplied.description && (
+                    <div className="sm:col-span-2">
+                      <span className="font-medium text-green-800">Descrição:</span>
+                      <p className="mt-1 text-green-700">
+                        {registration.discountCouponApplied.description}
+                      </p>
+                    </div>
+                  )}
+                  {registration.batch && (
+                    <div className="sm:col-span-2">
+                      <div className="bg-white p-3 rounded-lg border border-green-200">
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-gray-600">Valor original:</span>
+                          <span className="line-through text-gray-500">
+                            {formatPrice(registration.batch.price)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center font-semibold text-lg mt-1">
+                          <span className="text-green-800">Valor com desconto:</span>
+                          <span className="text-green-700">
+                            {formatPrice(registration.batch.price * (1 - registration.discountCouponApplied.discountPercentage / 100))}
+                          </span>
+                        </div>
+                        <div className="text-center mt-2 text-sm text-green-600">
+                          Você economizou {formatPrice(registration.batch.price * (registration.discountCouponApplied.discountPercentage / 100))}!
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -841,7 +946,12 @@ export default function ConfirmationPage() {
             <p className="text-sm text-gray-600 mb-4">
               Entre em contato com os organizadores do evento para qualquer dúvida ou suporte.
             </p>
-            <Button variant="outline" size="sm">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleContactOrganizers}
+              className="border-blue-600 text-blue-600 hover:bg-blue-50 py-2 px-4"
+            >
               <Mail className="h-4 w-4 mr-2" />
               Contatar Organizadores
             </Button>
