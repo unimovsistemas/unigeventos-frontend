@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Search, Calendar, Filter, Loader2, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function EventsPage() {
   const [events, setEvents] = useState<EventDataResponse[]>([]);
@@ -19,6 +20,7 @@ export default function EventsPage() {
   const [totalElements, setTotalElements] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { redirectToRegister, isAuthenticated, isLoading: authLoading } = useAuth();
 
   const pageSize = 9; // 3x3 grid
 
@@ -175,8 +177,8 @@ export default function EventsPage() {
   };
 
   const handleRegister = (eventId: string) => {
-    // Redirecionar para login com parâmetro de retorno
-    router.push(`/login?redirect=/user/events/${eventId}/register`);
+    // Usar o hook de autenticação para redirecionamento inteligente
+    redirectToRegister(eventId, true);
   };
 
   const handlePageChange = (newPage: number) => {
@@ -248,13 +250,35 @@ export default function EventsPage() {
           </motion.div>
           
           <motion.p 
-            className="text-base sm:text-lg md:text-xl text-gray-600 mb-6 sm:mb-8 leading-relaxed px-2"
+            className="text-base sm:text-lg md:text-xl text-gray-600 mb-4 leading-relaxed px-2"
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.6 }}
           >
             Conecte-se com experiências transformadoras e momentos especiais de nossa comunidade
           </motion.p>
+          
+          {/* Status de Autenticação */}
+          {!authLoading && (
+            <motion.div 
+              className="mb-6 sm:mb-8"
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.4, delay: 0.7 }}
+            >
+              {isAuthenticated ? (
+                <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 px-3 py-1.5 rounded-full text-sm border border-green-200">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  Conectado - Inscrições diretas habilitadas
+                </div>
+              ) : (
+                <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-sm border border-blue-200">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  Faça login para inscrições mais rápidas
+                </div>
+              )}
+            </motion.div>
+          )}
           
           {/* Search Bar */}
           <motion.form 

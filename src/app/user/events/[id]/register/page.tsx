@@ -170,8 +170,20 @@ export default function EventRegistrationPage() {
   if (loading) {
     return (
       <div className="flex flex-col justify-center items-center py-12 sm:py-16 lg:py-20">
-        <Loader2 className="h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 animate-spin text-orange-600 mb-4" />
-        <span className="text-gray-600 font-medium text-sm sm:text-base">Carregando detalhes do evento...</span>
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="text-center"
+        >
+          <Loader2 className="h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 animate-spin text-orange-600 mb-4 mx-auto" />
+          <span className="text-gray-600 font-medium text-sm sm:text-base block mb-2">
+            Preparando sua inscrição...
+          </span>
+          <span className="text-gray-500 text-xs sm:text-sm">
+            Verificando disponibilidade e carregando detalhes do evento
+          </span>
+        </motion.div>
       </div>
     );
   }

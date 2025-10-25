@@ -19,6 +19,8 @@ export function useAuth(): AuthInfo & {
   logout: () => Promise<void>;
   hasRole: (role: string) => boolean;
   hasAnyRole: (roles: string[]) => boolean;
+  redirectToRegister: (eventId: string, showMessage?: boolean) => void;
+  checkAuthAndRedirect: (eventId: string) => boolean;
 } {
   const [authInfo, setAuthInfo] = useState<AuthInfo>({
     isAuthenticated: false,
@@ -72,11 +74,37 @@ export function useAuth(): AuthInfo & {
     return roles.some(role => authInfo.roles.includes(role));
   };
 
+  const redirectToRegister = (eventId: string, showMessage: boolean = true): void => {
+    if (authInfo.isAuthenticated) {
+      // Usuário autenticado, redirecionar diretamente para registro
+      router.push(`/user/events/${eventId}/register`);
+    } else {
+      // Usuário não autenticado, redirecionar para login com parâmetro de retorno
+      const loginUrl = `/login?redirect=/user/events/${eventId}/register`;
+      if (showMessage) {
+        // Adicionar parâmetro para mostrar mensagem explicativa
+        router.push(`${loginUrl}&message=login-required`);
+      } else {
+        router.push(loginUrl);
+      }
+    }
+  };
+
+  const checkAuthAndRedirect = (eventId: string): boolean => {
+    if (authInfo.isAuthenticated) {
+      router.push(`/user/events/${eventId}/register`);
+      return true;
+    }
+    return false;
+  };
+
   return {
     ...authInfo,
     logout,
     hasRole,
-    hasAnyRole
+    hasAnyRole,
+    redirectToRegister,
+    checkAuthAndRedirect
   };
 }
 

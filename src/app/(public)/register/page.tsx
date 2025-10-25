@@ -175,7 +175,6 @@ export default function RegisterPage() {
           contact,
           document,
         },
-        accessToken
       );
       
       toast.success("🎉 Cadastro finalizado com sucesso! Um e-mail de boas-vindas foi enviado.", {

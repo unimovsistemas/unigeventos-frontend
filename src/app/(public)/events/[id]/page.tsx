@@ -26,6 +26,7 @@ import {
   BusIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '@/hooks/useAuth';
 
 const eventTypeLabels = {
   CONFERENCE: 'Conferência',
@@ -49,6 +50,7 @@ export default function EventDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const eventId = params.id as string;
+  const { redirectToRegister } = useAuth();
   
   const [event, setEvent] = useState<EventDataResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -123,7 +125,8 @@ export default function EventDetailsPage() {
   }, [eventId]);
 
   const handleRegister = () => {
-    router.push(`/login?redirect=/user/events/${eventId}/register`);
+    // Usar o hook de autenticação para redirecionamento inteligente
+    redirectToRegister(eventId, true);
   };
 
   const formatDateTime = (date: Date | string | null | undefined) => {

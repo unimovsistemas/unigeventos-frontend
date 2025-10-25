@@ -182,7 +182,6 @@ export function useRegistrationFlow() {
           contact: formData.contact,
           document: formData.document,
         },
-        accessToken
       );
       
       setSuccessMessage('Cadastro finalizado com sucesso! Um e-mail de boas-vindas foi enviado.');

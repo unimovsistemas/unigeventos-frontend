@@ -26,6 +26,11 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const redirectUrl = searchParams.get('redirect');
+  const message = searchParams.get('message');
+  
+  // Detectar se está tentando se registrar em um evento
+  const isEventRegistration = redirectUrl?.includes('/user/events/') && redirectUrl?.includes('/register');
+  const eventId = isEventRegistration && redirectUrl ? redirectUrl.split('/')[3] : null;
   
   const { 
     turnstileToken, 
@@ -135,8 +140,16 @@ export default function LoginPage() {
             {redirectUrl && (
               <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-center">
                 <p className="text-orange-700 text-sm font-medium">
-                  Faça login para continuar com sua inscrição no evento
+                  {isEventRegistration 
+                    ? "🎯 Para se inscrever no evento, é necessário fazer login ou criar uma conta"
+                    : "Faça login para continuar"
+                  }
                 </p>
+                {isEventRegistration && (
+                  <p className="text-orange-600 text-xs mt-1">
+                    Após o login, você será redirecionado automaticamente para a página de inscrição
+                  </p>
+                )}
               </div>
             )}
             
