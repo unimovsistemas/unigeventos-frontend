@@ -123,7 +123,7 @@ export default function EventDetailsPage() {
   }, [eventId]);
 
   const handleRegister = () => {
-    router.push(`/login?redirect=/events/${eventId}/register`);
+    router.push(`/login?redirect=/user/events/${eventId}/register`);
   };
 
   const formatDateTime = (date: Date | string | null | undefined) => {

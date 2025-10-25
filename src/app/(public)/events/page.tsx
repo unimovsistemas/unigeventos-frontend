@@ -176,7 +176,7 @@ export default function EventsPage() {
 
   const handleRegister = (eventId: string) => {
     // Redirecionar para login com parâmetro de retorno
-    router.push(`/login?redirect=/events/${eventId}/register`);
+    router.push(`/login?redirect=/user/events/${eventId}/register`);
   };
 
   const handlePageChange = (newPage: number) => {
