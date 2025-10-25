@@ -28,7 +28,7 @@ export function AuthNavigation({ currentPage, onBack, showHomeLink = true }: Aut
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => window.location.href = '/eventos'}
+            onClick={() => window.location.href = '/events'}
             className="text-gray-600 hover:text-gray-900"
           >
             <Home className="h-4 w-4 mr-1" />

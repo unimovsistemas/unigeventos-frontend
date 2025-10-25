@@ -29,7 +29,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             {/* Navigation */}
             <nav className="flex items-center space-x-2 sm:space-x-4">
               <a
-                href="/eventos"
+                href="/events"
                 className="text-gray-600 hover:text-orange-600 transition-colors duration-200 font-medium px-3 py-2 rounded-lg hover:bg-orange-50 text-sm sm:text-base"
               >
                 Eventos

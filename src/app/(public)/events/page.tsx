@@ -10,7 +10,7 @@ import { Search, Calendar, Filter, Loader2, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function EventosPage() {
+export default function EventsPage() {
   const [events, setEvents] = useState<EventDataResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -176,7 +176,7 @@ export default function EventosPage() {
 
   const handleRegister = (eventId: string) => {
     // Redirecionar para login com parâmetro de retorno
-    router.push(`/login?redirect=/eventos/${eventId}/register`);
+    router.push(`/login?redirect=/events/${eventId}/register`);
   };
 
   const handlePageChange = (newPage: number) => {

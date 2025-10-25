@@ -150,7 +150,7 @@ export default function ConfirmationPage() {
 
   const handlePayNow = async () => {
     // Redirecionar para página de pagamento
-    router.push(`/eventos/${eventId}/pagamento?registrationId=${registrationId}`);
+    router.push(`/user/events/${eventId}/registration-payment?registrationId=${registrationId}`);
   };
 
   const handlePayLater = () => {
@@ -164,14 +164,14 @@ export default function ConfirmationPage() {
         await navigator.share({
           title: `Inscrição confirmada: ${event?.name}`,
           text: `Acabei de me inscrever no evento ${event?.name}!`,
-          url: window.location.origin + `/eventos/${eventId}`
+          url: window.location.origin + `/user/events/${eventId}`
         });
       } catch (err) {
         console.log('Erro ao compartilhar:', err);
       }
     } else {
       // Fallback para navegadores que não suportam Web Share API
-      navigator.clipboard.writeText(window.location.origin + `/eventos/${eventId}`);
+      navigator.clipboard.writeText(window.location.origin + `/user/events/${eventId}`);
       alert('Link copiado para a área de transferência!');
     }
   };
@@ -376,7 +376,7 @@ export default function ConfirmationPage() {
         <h2 className="text-xl font-bold text-red-700 mb-4">Erro ao Carregar Confirmação</h2>
         <p className="text-red-600 mb-6">{error || 'Inscrição não encontrada'}</p>
         <Button 
-          onClick={() => router.push('/eventos')}
+          onClick={() => router.push('/events')}
           className="bg-red-600 hover:bg-red-700 text-white px-4 sm:px-6 py-2 rounded-lg text-sm sm:text-base"
         >
           Voltar aos Eventos
@@ -804,7 +804,7 @@ export default function ConfirmationPage() {
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-4">
         <Button
-          onClick={() => router.push('/eventos')}
+          onClick={() => router.push('/events')}
           className="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-3"
         >
           <Home className="h-4 w-4 mr-2" />

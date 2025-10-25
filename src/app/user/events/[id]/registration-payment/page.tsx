@@ -106,7 +106,7 @@ export default function PaymentPage() {
   };
 
   const handlePayLater = () => {
-    router.push('/eventos');
+    router.push('/events');
   };
 
   const handlePaymentTypeChange = (type: PaymentType) => {
@@ -157,7 +157,7 @@ export default function PaymentPage() {
       const response = await processPayment(paymentData);
 
       // Redirecionar para confirmação com sucesso
-      router.push(`/eventos/${eventId}/confirmacao?registrationId=${registrationId}&paid=true`);
+      router.push(`/user/events/${eventId}/registration-confirmation?registrationId=${registrationId}&paid=true`);
       
     } catch (err: any) {
       console.error('Erro ao processar pagamento:', err);
@@ -231,7 +231,7 @@ export default function PaymentPage() {
         <h2 className="text-xl font-bold text-red-700 mb-4">Erro ao Carregar Informações</h2>
         <p className="text-red-600 mb-6">{error || 'Inscrição não encontrada'}</p>
         <Button 
-          onClick={() => router.push('/eventos')}
+          onClick={() => router.push('/events')}
           className="bg-red-600 hover:bg-red-700 text-white px-4 sm:px-6 py-2 rounded-lg text-sm sm:text-base"
         >
           Voltar aos Eventos
@@ -244,7 +244,7 @@ export default function PaymentPage() {
 
   if (event.isFree) {
     // Se o evento for gratuito, redirecionar direto para confirmação
-    router.push(`/eventos/${eventId}/confirmacao?registrationId=${registrationId}&paid=true`);
+    router.push(`/user/events/${eventId}/registration-confirmation?registrationId=${registrationId}&paid=true`);
     return null;
   }
 
@@ -263,7 +263,7 @@ export default function PaymentPage() {
         transition={{ duration: 0.5, delay: 0.1 }}
       >
         <Button
-          onClick={() => router.push(`/eventos/${eventId}`)}
+          onClick={() => router.push(`/user/events/${eventId}`)}
           variant="outline"
           className="flex items-center space-x-2 border-gray-300 text-gray-600 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-600"
         >

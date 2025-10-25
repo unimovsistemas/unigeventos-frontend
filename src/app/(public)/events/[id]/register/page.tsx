@@ -69,7 +69,7 @@ export default function EventRegistrationPage() {
         
         if (registrationExists.exists && registrationExists.id) {
           // Se já existe inscrição, redirecionar para confirmação
-          router.push(`/eventos/${eventId}/confirmacao?registrationId=${registrationExists.id}`);
+          router.push(`/user/events/${eventId}/registration-confirmation?registrationId=${registrationExists.id}`);
           return;
         }
         
@@ -112,10 +112,10 @@ export default function EventRegistrationPage() {
       const requiresPayment = response.requiresPayment || (!event.isFree && getCurrentBatch());
       
       if (requiresPayment) {
-        router.push(`/eventos/${eventId}/pagamento?registrationId=${response.id}`);
+        router.push(`/user/events/${eventId}/registration-payment?registrationId=${response.id}`);
       } else {
         // Se for gratuito, redirecionar para página de confirmação
-        router.push(`/eventos/${eventId}/confirmacao?registrationId=${response.id}&paid=true`);
+        router.push(`/user/events/${eventId}/registration-confirmation?registrationId=${response.id}&paid=true`);
       }
       
     } catch (err: any) {
@@ -183,7 +183,7 @@ export default function EventRegistrationPage() {
         <h2 className="text-xl font-bold text-red-700 mb-4">Erro ao Carregar Evento</h2>
         <p className="text-red-600 mb-6">{error || 'Evento não encontrado'}</p>
         <Button 
-          onClick={() => router.push('/eventos')}
+          onClick={() => router.push('/events')}
           className="bg-red-600 hover:bg-red-700 text-white px-4 sm:px-6 py-2 rounded-lg text-sm sm:text-base"
         >
           Voltar aos Eventos
@@ -209,7 +209,7 @@ export default function EventRegistrationPage() {
         transition={{ duration: 0.5, delay: 0.1 }}
       >
         <Button
-          onClick={() => router.push(`/eventos/${eventId}`)}
+          onClick={() => router.push(`/events/${eventId}`)}
           variant="outline"
           className="flex items-center space-x-2 border-gray-300 text-gray-600 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-600"
         >
@@ -364,7 +364,7 @@ export default function EventRegistrationPage() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => router.push(`/eventos/${eventId}`)}
+                onClick={() => router.push(`/events/${eventId}`)}
                 className="flex-1 sm:flex-none"
               >
                 Cancelar

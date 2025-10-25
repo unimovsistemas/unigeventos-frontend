@@ -26,7 +26,7 @@ export function middleware(request: NextRequest) {
     '/login', 
     '/register', 
     '/forgot-password', 
-    '/eventos',
+    '/events',
     '/_next',
     '/favicon.ico',
     '/assets'
@@ -125,8 +125,8 @@ export function middleware(request: NextRequest) {
     }
   } else if (isRootPath) {
     // Sem token na raiz, redirecionar para eventos (página pública)
-    console.log('Middleware: Sem token na raiz, redirecionando para /eventos');
-    return NextResponse.redirect(new URL('/eventos', request.url));
+    console.log('Middleware: Sem token na raiz, redirecionando para /events');
+    return NextResponse.redirect(new URL('/events', request.url));
   }
   
   // Permitir acesso a rotas públicas

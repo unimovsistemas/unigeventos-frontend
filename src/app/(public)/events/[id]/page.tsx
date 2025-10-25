@@ -123,7 +123,7 @@ export default function EventDetailsPage() {
   }, [eventId]);
 
   const handleRegister = () => {
-    router.push(`/login?redirect=/eventos/${eventId}/register`);
+    router.push(`/login?redirect=/events/${eventId}/register`);
   };
 
   const formatDateTime = (date: Date | string | null | undefined) => {
@@ -220,7 +220,7 @@ export default function EventDetailsPage() {
         <h2 className="text-xl font-bold text-red-700 mb-4">Erro ao Carregar Evento</h2>
         <p className="text-red-600 mb-6">{error || 'Evento não encontrado'}</p>
         <Button 
-          onClick={() => router.push('/eventos')}
+          onClick={() => router.push('/events')}
           className="bg-red-600 hover:bg-red-700 text-white px-4 sm:px-6 py-2 rounded-lg text-sm sm:text-base"
         >
           Voltar aos Eventos
@@ -252,7 +252,7 @@ export default function EventDetailsPage() {
           whileTap={{ scale: 0.95 }}
         >
           <Button
-            onClick={() => router.push('/eventos')}
+            onClick={() => router.push('/events')}
             variant="outline"
             className="flex items-center space-x-2 border-gray-300 text-gray-600 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-600 px-3 sm:px-4 py-2 text-sm sm:text-base transition-all duration-300 group"
           >
