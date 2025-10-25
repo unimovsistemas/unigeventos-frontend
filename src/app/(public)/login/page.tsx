@@ -13,12 +13,14 @@ import { PasswordField } from "@/components/ui/password-field";
 import { useTurnstile } from "@/hooks/useTurnstile";
 import { PanelSelectionModal } from "@/components/ui/panel-selection-modal";
 import { toast } from "react-toastify";
+import { checkRegistrationExists } from "@/services/registrationService";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingRegistration, setIsCheckingRegistration] = useState(false);
   const [showCaptcha, setShowCaptcha] = useState(false);
   const [showPanelSelection, setShowPanelSelection] = useState(false);
   const [userRoles, setUserRoles] = useState<string[]>([]);
@@ -59,12 +61,39 @@ export default function LoginPage() {
     }
   };
 
-  const handleRedirectAfterLogin = (roles: string[]) => {
+  const handleRedirectAfterLogin = async (roles: string[]) => {
     const hasAdminRole = roles.includes('ROLE_ADMIN');
     const hasUserRole = roles.includes('ROLE_USER') || roles.includes('ROLE_LEADER');
 
     if (redirectUrl) {
-      // Se há URL de redirecionamento, usar ela
+      // Verificar se é um redirecionamento para registro de evento
+      if (redirectUrl.includes('/user/events/') && redirectUrl.includes('/register')) {
+        try {
+          setIsCheckingRegistration(true);
+          
+          // Extrair o eventId da URL
+          const eventIdMatch = redirectUrl.match(/\/user\/events\/([^\/]+)\/register/);
+          if (eventIdMatch) {
+            const eventId = eventIdMatch[1];
+            
+            // Verificar se já existe uma inscrição
+            const registrationExists = await checkRegistrationExists(eventId);
+            
+            if (registrationExists.exists && registrationExists.id) {
+              // Se já existe inscrição, redirecionar para confirmação
+              router.push(`/user/events/${eventId}/registration-confirmation?registrationId=${registrationExists.id}`);
+              return;
+            }
+          }
+        } catch (error) {
+          console.error('Erro ao verificar inscrição durante login:', error);
+          // Em caso de erro, continuar com redirecionamento normal
+        } finally {
+          setIsCheckingRegistration(false);
+        }
+      }
+      
+      // Se há URL de redirecionamento e não é evento ou não tem inscrição, usar ela
       router.push(redirectUrl);
       return;
     }
@@ -106,9 +135,9 @@ export default function LoginPage() {
       const response = await login(username, password);
       
       // Aguardar um pouco para garantir que os cookies sejam definidos
-      setTimeout(() => {
+      setTimeout(async () => {
         // Redirecionar baseado nos roles
-        handleRedirectAfterLogin(response.roles);
+        await handleRedirectAfterLogin(response.roles);
       }, 100);
     } catch (err: any) {
       const hasCausedBy = err.response != null && err.response.data != null;
@@ -209,12 +238,17 @@ export default function LoginPage() {
               onClick={handleLogin}
               size="lg"
               className="w-full h-12 bg-orange-600 hover:bg-orange-700 text-white font-medium transition-all duration-300"
-              disabled={isLoading || (showCaptcha && !isTurnstileValid)}
+              disabled={isLoading || isCheckingRegistration || (showCaptcha && !isTurnstileValid)}
             >
               {isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   Entrando...
+                </>
+              ) : isCheckingRegistration ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Verificando inscrição...
                 </>
               ) : (
                 "Entrar"

@@ -20,7 +20,7 @@ export default function EventsPage() {
   const [totalElements, setTotalElements] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  const { redirectToRegister, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { redirectToRegister, isAuthenticated, isLoading: authLoading, isCheckingRegistration } = useAuth();
 
   const pageSize = 9; // 3x3 grid
 

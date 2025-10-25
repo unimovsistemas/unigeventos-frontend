@@ -50,7 +50,7 @@ export default function EventDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const eventId = params.id as string;
-  const { redirectToRegister } = useAuth();
+  const { redirectToRegister, isCheckingRegistration } = useAuth();
   
   const [event, setEvent] = useState<EventDataResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -452,15 +452,21 @@ export default function EventDetailsPage() {
             <CardFooter>
               <Button
                 onClick={handleRegister}
-                disabled={!registrationOpen || availableSlots <= 0}
-                className="w-full bg-orange-600 hover:bg-orange-700 text-white py-3 text-base sm:text-lg font-semibold rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!registrationOpen || availableSlots <= 0 || isCheckingRegistration}
+                className="w-full bg-orange-600 hover:bg-orange-700 text-white py-3 text-base sm:text-lg font-semibold rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                {!registrationOpen 
-                  ? 'Inscrições Encerradas'
-                  : availableSlots <= 0
-                  ? 'Esgotado'
-                  : 'Fazer Inscrição'
-                }
+                {isCheckingRegistration ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Verificando inscrição...
+                  </>
+                ) : !registrationOpen ? (
+                  'Inscrições Encerradas'
+                ) : availableSlots <= 0 ? (
+                  'Esgotado'
+                ) : (
+                  'Fazer Inscrição'
+                )}
               </Button>
             </CardFooter>
           </Card>

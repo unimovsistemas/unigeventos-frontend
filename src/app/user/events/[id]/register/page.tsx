@@ -8,8 +8,7 @@ import {
   RegistrationData, 
   TransportationType, 
   registerForEvent, 
-  getTransportationTypeLabel,
-  checkRegistrationExists 
+  getTransportationTypeLabel
 } from '@/services/registrationService';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -64,15 +63,8 @@ export default function EventRegistrationPage() {
         setLoading(true);
         setError(null);
         
-        // Verificar se já existe uma inscrição para este evento
-        const registrationExists = await checkRegistrationExists(eventId);
-        
-        if (registrationExists.exists && registrationExists.id) {
-          // Se já existe inscrição, redirecionar para confirmação
-          router.push(`/user/events/${eventId}/registration-confirmation?registrationId=${registrationExists.id}`);
-          return;
-        }
-        
+        // Carregar detalhes do evento diretamente
+        // A verificação de inscrição existente agora é feita no hook useAuth
         const eventData = await getEventById(eventId);
         setEvent(eventData);
         

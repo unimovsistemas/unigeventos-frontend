@@ -7,26 +7,29 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import CookieManager from '@/lib/cookieManager';
 import { logout as logoutService } from '@/services/authService';
+import { checkRegistrationExists } from '@/services/registrationService';
 
 interface AuthInfo {
   isAuthenticated: boolean;
   token: string | null;
   roles: string[];
   isLoading: boolean;
+  isCheckingRegistration: boolean;
 }
 
 export function useAuth(): AuthInfo & {
   logout: () => Promise<void>;
   hasRole: (role: string) => boolean;
   hasAnyRole: (roles: string[]) => boolean;
-  redirectToRegister: (eventId: string, showMessage?: boolean) => void;
-  checkAuthAndRedirect: (eventId: string) => boolean;
+  redirectToRegister: (eventId: string, showMessage?: boolean) => Promise<void>;
+  checkAuthAndRedirect: (eventId: string) => Promise<boolean>;
 } {
   const [authInfo, setAuthInfo] = useState<AuthInfo>({
     isAuthenticated: false,
     token: null,
     roles: [],
-    isLoading: true
+    isLoading: true,
+    isCheckingRegistration: false
   });
   
   const router = useRouter();
@@ -39,7 +42,8 @@ export function useAuth(): AuthInfo & {
       isAuthenticated: !!token,
       token,
       roles,
-      isLoading: false
+      isLoading: false,
+      isCheckingRegistration: false
     });
   }, []);
 
@@ -50,7 +54,8 @@ export function useAuth(): AuthInfo & {
         isAuthenticated: false,
         token: null,
         roles: [],
-        isLoading: false
+        isLoading: false,
+        isCheckingRegistration: false
       });
       router.push('/login');
     } catch (error) {
@@ -60,7 +65,8 @@ export function useAuth(): AuthInfo & {
         isAuthenticated: false,
         token: null,
         roles: [],
-        isLoading: false
+        isLoading: false,
+        isCheckingRegistration: false
       });
       router.push('/login');
     }
@@ -74,10 +80,33 @@ export function useAuth(): AuthInfo & {
     return roles.some(role => authInfo.roles.includes(role));
   };
 
-  const redirectToRegister = (eventId: string, showMessage: boolean = true): void => {
+  const redirectToRegister = async (eventId: string, showMessage: boolean = true): Promise<void> => {
     if (authInfo.isAuthenticated) {
-      // Usuário autenticado, redirecionar diretamente para registro
-      router.push(`/user/events/${eventId}/register`);
+      // Evitar múltiplas verificações simultâneas
+      if (authInfo.isCheckingRegistration) return;
+      
+      try {
+        // Marcar como verificando inscrição
+        setAuthInfo(prev => ({ ...prev, isCheckingRegistration: true }));
+        
+        // Verificar se já existe uma inscrição antes de redirecionar
+        const registrationExists = await checkRegistrationExists(eventId);
+        
+        if (registrationExists.exists && registrationExists.id) {
+          // Se já existe inscrição, redirecionar diretamente para confirmação
+          router.push(`/user/events/${eventId}/registration-confirmation?registrationId=${registrationExists.id}`);
+        } else {
+          // Se não existe inscrição, redirecionar para registro
+          router.push(`/user/events/${eventId}/register`);
+        }
+      } catch (error) {
+        console.error('Erro ao verificar inscrição existente:', error);
+        // Em caso de erro, redirecionar para registro (comportamento padrão)
+        router.push(`/user/events/${eventId}/register`);
+      } finally {
+        // Resetar estado de verificação
+        setAuthInfo(prev => ({ ...prev, isCheckingRegistration: false }));
+      }
     } else {
       // Usuário não autenticado, redirecionar para login com parâmetro de retorno
       const loginUrl = `/login?redirect=/user/events/${eventId}/register`;
@@ -90,10 +119,35 @@ export function useAuth(): AuthInfo & {
     }
   };
 
-  const checkAuthAndRedirect = (eventId: string): boolean => {
+  const checkAuthAndRedirect = async (eventId: string): Promise<boolean> => {
     if (authInfo.isAuthenticated) {
-      router.push(`/user/events/${eventId}/register`);
-      return true;
+      // Evitar múltiplas verificações simultâneas
+      if (authInfo.isCheckingRegistration) return true;
+      
+      try {
+        // Marcar como verificando inscrição
+        setAuthInfo(prev => ({ ...prev, isCheckingRegistration: true }));
+        
+        // Verificar se já existe uma inscrição antes de redirecionar
+        const registrationExists = await checkRegistrationExists(eventId);
+        
+        if (registrationExists.exists && registrationExists.id) {
+          // Se já existe inscrição, redirecionar diretamente para confirmação
+          router.push(`/user/events/${eventId}/registration-confirmation?registrationId=${registrationExists.id}`);
+        } else {
+          // Se não existe inscrição, redirecionar para registro
+          router.push(`/user/events/${eventId}/register`);
+        }
+        return true;
+      } catch (error) {
+        console.error('Erro ao verificar inscrição existente:', error);
+        // Em caso de erro, redirecionar para registro (comportamento padrão)
+        router.push(`/user/events/${eventId}/register`);
+        return true;
+      } finally {
+        // Resetar estado de verificação
+        setAuthInfo(prev => ({ ...prev, isCheckingRegistration: false }));
+      }
     }
     return false;
   };
