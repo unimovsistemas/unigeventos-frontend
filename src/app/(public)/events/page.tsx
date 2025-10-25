@@ -6,7 +6,7 @@ import { getPublicEvents } from '@/services/publicEventsService';
 import { EventCard } from '@/components/public/EventCard';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Calendar, Filter, Loader2, Sparkles } from 'lucide-react';
+import { Search, Calendar, Filter, Loader2, Sparkles, User, Receipt } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
@@ -70,7 +70,10 @@ export default function EventsPage() {
           organizerId: '1',
           organizer: {
             id: '1',
-            name: 'Ministério de Jovens'
+            name: 'Ministério de Jovens',
+            contact: {
+              email: 'jovens@igreja.com'
+            }
           },
           numberOfSubscribers: 127,
           batches: [
@@ -111,7 +114,10 @@ export default function EventsPage() {
           organizerId: '2',
           organizer: {
             id: '2',
-            name: 'Ministério de Casais'
+            name: 'Ministério de Casais',
+            contact: {
+              email: 'casais@igreja.com'
+            }
           },
           numberOfSubscribers: 24,
           batches: [
@@ -144,7 +150,10 @@ export default function EventsPage() {
           organizerId: '3',
           organizer: {
             id: '3',
-            name: 'Escola de Líderes'
+            name: 'Escola de Líderes',
+            contact: {
+              email: 'lideres@igreja.com'
+            }
           },
           numberOfSubscribers: 67,
           batches: []
@@ -257,6 +266,45 @@ export default function EventsPage() {
           >
             Conecte-se com experiências transformadoras e momentos especiais de nossa comunidade
           </motion.p>
+
+          {/* Welcome Message for Authenticated Users */}
+          {!authLoading && isAuthenticated && (
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.65 }}
+              className="mb-4 sm:mb-6 max-w-2xl mx-auto"
+            >
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 sm:p-6">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="bg-green-100 p-2 rounded-full">
+                    <User className="h-5 w-5 text-green-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-green-800">
+                    Bem-vindo de volta! 👋
+                  </h3>
+                </div>
+                <p className="text-green-700 text-sm sm:text-base mb-4">
+                  Você está conectado e pode se inscrever diretamente nos eventos. 
+                  <span className="font-medium"> Suas inscrições ficaram mais rápidas e práticas!</span>
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <div className="flex items-center gap-1 bg-white/70 px-3 py-1 rounded-full text-xs text-green-700">
+                    <Calendar className="h-3 w-3" />
+                    Inscrição instantânea
+                  </div>
+                  <div className="flex items-center gap-1 bg-white/70 px-3 py-1 rounded-full text-xs text-green-700">
+                    <User className="h-3 w-3" />
+                    Dados salvos
+                  </div>
+                  <div className="flex items-center gap-1 bg-white/70 px-3 py-1 rounded-full text-xs text-green-700">
+                    <Receipt className="h-3 w-3" />
+                    Histórico completo
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
           
           {/* Status de Autenticação */}
           {!authLoading && (
@@ -267,14 +315,14 @@ export default function EventsPage() {
               transition={{ duration: 0.4, delay: 0.7 }}
             >
               {isAuthenticated ? (
-                <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 px-3 py-1.5 rounded-full text-sm border border-green-200">
+                <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-full text-sm border border-green-200 font-medium">
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                  Conectado - Inscrições diretas habilitadas
+                  ✨ Modo Conectado - Pronto para se inscrever!
                 </div>
               ) : (
-                <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-sm border border-blue-200">
+                <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-full text-sm border border-blue-200">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  Faça login para inscrições mais rápidas
+                  💡 Faça login para inscrições mais rápidas
                 </div>
               )}
             </motion.div>
@@ -438,6 +486,47 @@ export default function EventsPage() {
             Tentar Novamente
           </Button>
         </div>
+      )}
+
+      {/* Quick Actions for Authenticated Users */}
+      {!authLoading && isAuthenticated && !loading && !error && (
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 sm:p-6 mb-6"
+        >
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-lg font-semibold text-blue-800 mb-1">
+                Ações Rápidas
+              </h3>
+              <p className="text-blue-600 text-sm">
+                Acesse rapidamente suas áreas favoritas
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2 sm:gap-3">
+              <Button
+                onClick={() => router.push('/user/dashboard')}
+                variant="outline"
+                size="sm"
+                className="border-blue-300 text-blue-700 hover:bg-blue-50 hover:border-blue-400"
+              >
+                <User className="h-4 w-4 mr-2" />
+                Minhas Inscrições
+              </Button>
+              <Button
+                onClick={() => router.push('/admin/dashboard')}
+                variant="outline"
+                size="sm"
+                className="border-indigo-300 text-indigo-700 hover:bg-indigo-50 hover:border-indigo-400"
+              >
+                <Calendar className="h-4 w-4 mr-2" />
+                Dashboard Admin
+              </Button>
+            </div>
+          </div>
+        </motion.div>
       )}
 
       {/* Events Grid */}
