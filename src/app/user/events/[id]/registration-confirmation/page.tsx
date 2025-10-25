@@ -24,7 +24,8 @@ import {
   CreditCard,
   Clock,
   Home,
-  Share2
+  Share2,
+  Phone
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { getSubscriptionPaymentStatus, PaymentStatus, SubscriptionPaymentInfo } from '@/services/paymentService';
@@ -161,8 +162,14 @@ export default function ConfirmationPage() {
     if (!event) return;
     const subject = `Dúvida sobre a inscrição no evento: ${event.name}`;
     const mailtoLink = `mailto:${event.organizer?.contact?.email}?subject=${encodeURIComponent(subject)}`;
-    window
-      .open(mailtoLink, '_blank')
+    window.open(mailtoLink, '_blank');
+  };
+
+  const handleWhatsAppContact = () => {
+    const phoneNumber = '5547988284292';
+    const message = `Olá! Tenho uma dúvida sobre minha inscrição no evento "${event?.name}". Minha inscrição é #${registrationId?.slice(-8)}.`;
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
   };
 
   const handleShare = async () => {
@@ -946,15 +953,26 @@ export default function ConfirmationPage() {
             <p className="text-sm text-gray-600 mb-4">
               Entre em contato com os organizadores do evento para qualquer dúvida ou suporte.
             </p>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={handleContactOrganizers}
-              className="border-blue-600 text-blue-600 hover:bg-blue-50 py-2 px-4"
-            >
-              <Mail className="h-4 w-4 mr-2" />
-              Contatar Organizadores
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleContactOrganizers}
+                className="border-blue-600 text-blue-600 hover:bg-blue-50 py-2 px-4"
+              >
+                <Mail className="h-4 w-4 mr-2" />
+                Contatar por E-mail
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleWhatsAppContact}
+                className="border-green-600 text-green-600 hover:bg-green-50 py-2 px-4"
+              >
+                <Phone className="h-4 w-4 mr-2" />
+                Contatar via WhatsApp
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
