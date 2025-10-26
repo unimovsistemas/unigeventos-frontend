@@ -90,7 +90,11 @@ export default function EventDetailsPage() {
           organizerId: '1',
           organizer: {
             id: '1',
-            name: 'Ministério de Jovens UniMovimento'
+            name: 'Ministério de Jovens UniMovimento',
+            contact: {
+              email: 'contato@unimovimento.org',
+              phone: '+55 (11) 98765-4321'
+            }
           },
           numberOfSubscribers: 127,
           batches: [

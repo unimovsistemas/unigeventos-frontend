@@ -12,8 +12,11 @@ import {
   Edit3,
   Shield
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function ProfilePage() {
+  const router = useRouter();
+  
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -21,7 +24,9 @@ export default function ProfilePage() {
           <h1 className="text-2xl font-bold text-gray-900">Meu Perfil</h1>
           <p className="text-gray-600">Visualize suas informações pessoais</p>
         </div>
-        <Button className="bg-orange-600 hover:bg-orange-700">
+        <Button 
+        className="bg-orange-600 hover:bg-orange-700"
+        onClick={() => router.push('/user/edit-profile')}>
           <Edit3 size={16} className="mr-2" />
           Editar Perfil
         </Button>

@@ -20,6 +20,8 @@ import {
   LayoutIcon,
   UserCheck2Icon,
   UserCheckIcon,
+  Shield,
+  CalendarIcon,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import {
@@ -31,6 +33,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { useLogout } from "@/hooks/useLogout";
+import { useAuth } from "@/hooks/useAuth";
 
 interface NavItemProps {
   href: string;
@@ -56,6 +59,7 @@ const NavItem = ({ href, icon, children, isActive }: NavItemProps) => (
 export default function UserLayout({ children }: { children: ReactNode }) {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const { performLogout } = useLogout();
+  const { hasRole } = useAuth();
 
   const toggleSidebar = () => setSidebarOpen(!isSidebarOpen);
 
@@ -120,6 +124,14 @@ export default function UserLayout({ children }: { children: ReactNode }) {
                       <span>Editar Perfil</span>
                     </Link>
                   </DropdownMenuItem>
+                  {hasRole('ROLE_ADMIN') && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin/dashboard" className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 focus:text-blue-700">
+                        <Shield size={16} />
+                        <span>Painel de Administrador</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
                     onClick={performLogout}
@@ -160,6 +172,9 @@ export default function UserLayout({ children }: { children: ReactNode }) {
                 <div className="space-y-1">
                   <NavItem href="/user/dashboard" icon={<LayoutIcon size={20} />}>
                     Dashboard
+                  </NavItem>
+                  <NavItem href="/events" icon={<CalendarIcon size={20} />}>
+                    Eventos
                   </NavItem>
                   <NavItem href="/user/subscriptions" icon={<UserCheckIcon size={20} />}>
                     Minhas Inscrições
