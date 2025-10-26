@@ -13,14 +13,8 @@ export const usePersons = () => {
   const fetchPersons = useCallback(async (page: number = 0) => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("accessToken");
-      
-      if (!token) {
-        toast.error("Token de acesso não encontrado.");
-        return;
-      }
 
-      const response: PageResponse<PersonResponse> = await getPersonsPage(token, page, 12);
+      const response: PageResponse<PersonResponse> = await getPersonsPage(page, 12);
       
       setPersons(response.content || []);
       setTotalPages(response.totalPages);

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import axios from "axios";
+import { authApi } from '@/lib/apiClient';
 
 export interface PaymentResponse {
   id: string;
@@ -15,8 +15,6 @@ export interface PaymentResponse {
   installments: number;
 }
 
-const API_URL = "http://localhost:8001/rest/v1/payments";
-
 export interface PageResponse<T> {
   content: T[];
   totalElements: number;
@@ -28,18 +26,12 @@ export interface PageResponse<T> {
 }
 
 export const getPaymentsPage = async (
-  accessToken: string,
   page: number = 0,
   size: number = 10
 ): Promise<PageResponse<PaymentResponse>> => {
   try {
-    const response = await axios.get(
-      `${API_URL}/entities/page?page=${page}&size=${size}`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
+    const response = await authApi.get<PageResponse<PaymentResponse>>(
+      `/payments/entities/page?page=${page}&size=${size}`
     );
 
     return response.data;
@@ -74,14 +66,8 @@ export const getSubscriptionPaymentStatus = async (
   registrationId: string
 ): Promise<SubscriptionPaymentInfo> => {
   try {
-    const token = localStorage.getItem('accessToken');
-    const response = await axios.get(
-      `http://localhost:8001/rest/v1/payments/queries/subscription-payment/${registrationId}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      }
+    const response = await authApi.get<SubscriptionPaymentInfo>(
+      `/payments/queries/subscription-payment/${registrationId}`
     );
     return response.data;
   } catch (error: any) {
@@ -131,17 +117,9 @@ export const processPayment = async (
   paymentData: PaymentData
 ): Promise<ProcessPaymentResponse> => {
   try {
-    const token = localStorage.getItem('accessToken');
-    
-    const response = await axios.post(
-      `${API_URL}/actions/process-payment`,
-      paymentData,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-      }
+    const response = await authApi.post<ProcessPaymentResponse>(
+      `/payments/actions/process-payment`,
+      paymentData
     );
 
     return response.data;

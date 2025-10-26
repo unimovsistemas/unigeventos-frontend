@@ -222,7 +222,7 @@ export function EventCard({ event, onRegister }: EventCardProps) {
           whileTap={{ scale: 0.98 }}
         >
           <Button
-            onClick={() => router.push(`/eventos/${event.id}`)}
+            onClick={() => router.push(`/events/${event.id}`)}
             variant="outline"
             className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-orange-300 font-medium py-2 sm:py-2.5 px-4 sm:px-6 rounded-lg transition-all duration-300 text-sm sm:text-base group/btn"
           >

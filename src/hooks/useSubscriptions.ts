@@ -14,15 +14,9 @@ export const useSubscriptions = (eventId: string | null) => {
     async (searchTerm = "", page = 0) => {
       if (!eventId) return;
 
-      const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : "";
-      if (!token) {
-        toast.error("Usuário não autorizado!");
-        return;
-      }
-
       setLoading(true);
       try {
-        const res = await getSubscriptionsByEvent(token, eventId, searchTerm, page, 12);
+        const res = await getSubscriptionsByEvent(eventId, searchTerm, page, 12);
         setSubscriptions(res.content || []);
         setCurrentPage(res.number || 0);
         setTotalPages(res.totalPages || 0);

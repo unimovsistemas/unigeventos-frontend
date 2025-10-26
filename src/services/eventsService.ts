@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import axios from "axios";
+import { authApi } from '@/lib/apiClient';
 
 export interface Batch {
   id: string;
@@ -55,11 +55,13 @@ export interface EventDataResponse extends EventData {
   organizer?: {
     id: string;
     name: string;
+    contact: {
+      email: string;
+      phone?: string;
+    };
   };
   numberOfSubscribers: number;
 }
-
-const API_URL = "http://localhost:8001/rest/v1/events";
 
 interface PageResponse<T> {
   content: T[];
@@ -72,20 +74,14 @@ interface PageResponse<T> {
 }
 
 export const getAllPage = async (
-  accessToken: string,
   searchTerm = "",
   onlyPublished = false,
   page: number = 0,
   size: number = 3,
 ): Promise<PageResponse<EventDataResponse>> => {
   try {
-    const response = await axios.get(
-      `${API_URL}/entities/page-filter?page=${page}&size=${size}&search=${encodeURIComponent(searchTerm)}&onlyPublished=${onlyPublished}`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
+    const response = await authApi.get<PageResponse<EventDataResponse>>(
+      `/events/entities/page-filter?page=${page}&size=${size}&search=${encodeURIComponent(searchTerm)}&onlyPublished=${onlyPublished}`
     );
 
     return response.data;
@@ -98,15 +94,10 @@ export const getAllPage = async (
 };
 
 export const getEventById = async (
-  accessToken: string,
   id: string
 ): Promise<EventDataResponse> => {
   try {
-    const response = await axios.get(`${API_URL}/entities/${id}`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    const response = await authApi.get<EventDataResponse>(`/events/entities/${id}`);
 
     return response.data;
   } catch (error: any) {
@@ -117,15 +108,10 @@ export const getEventById = async (
 };
 
 export const createEvent = async (
-  accessToken: string,
   data: Partial<EventData>
 ): Promise<void> => {
   try {
-    await axios.post(`${API_URL}/entities`, data, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    await authApi.post(`/events/entities`, data);
   } catch (error: any) {
     throw new Error(
       error.response?.data?.message || "Erro ao criar novo evento."
@@ -134,16 +120,11 @@ export const createEvent = async (
 };
 
 export const updateEvent = async (
-  accessToken: string,
   id: string,
   data: Partial<EventData>
 ): Promise<void> => {
   try {
-    await axios.put(`${API_URL}/entities/${id}`, data, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    await authApi.put(`/events/entities/${id}`, data);
   } catch (error: any) {
     throw new Error(
       error.response?.data?.message || "Erro ao atualizar evento."
@@ -152,15 +133,10 @@ export const updateEvent = async (
 };
 
 export const publishEvent = async (
-  accessToken: string,
   eventId: string
 ): Promise<void> => {
   try {
-    await axios.put(`${API_URL}/actions/publish-event/${eventId}`, null, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    await authApi.put(`/events/actions/publish-event/${eventId}`, null);
   } catch (error: any) {
     if (error?.status === 401) {
       error.response.data.message = "Usuário não autorizado para realizar esta operação!";

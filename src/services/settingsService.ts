@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import axios from "axios";
-
-const API_URL = "http://localhost:8001/rest/v1/auth";
+import { authApi } from '@/lib/apiClient';
 
 export interface ChangePasswordPayload {
   currentPassword: string;
@@ -18,19 +16,12 @@ export interface ChangePasswordResponse {
  * Requer autenticação (token JWT)
  */
 export const changePassword = async (
-  payload: ChangePasswordPayload,
-  token: string
+  payload: ChangePasswordPayload
 ): Promise<ChangePasswordResponse> => {
   try {
-    const response = await axios.post(
-      `${API_URL}/change-password`,
-      payload,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
+    const response = await authApi.post(
+      `/auth/change-password`,
+      payload
     );
     return response.data;
   } catch (error: any) {

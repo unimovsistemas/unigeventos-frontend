@@ -17,6 +17,7 @@ import {
   maritalStatusTypeLabels, 
   choralVoiceTypeLabels 
 } from "@/services/personService";
+import { toast } from "react-toastify";
 
 interface ProfileEditFormProps {
   person: {
@@ -72,12 +73,16 @@ export default function ProfileEditForm({
   const [success, setSuccess] = useState("");
 
   const cardClass = isDark
-    ? "bg-[#2b2b2b] border-[#444] text-neutral-200"
-    : "bg-white border-gray-200 text-gray-900";
+    ? "bg-[#2b2b2b] border-[#444] text-neutral-200 shadow-lg"
+    : "bg-white border-gray-200 text-gray-900 shadow-lg";
 
   const inputClass = isDark
-    ? "bg-[#1e1e1e] border-[#444] text-neutral-200"
-    : "bg-white border-gray-300 text-gray-900";
+    ? "bg-[#1a1a1a] border-[#404040] text-neutral-100 placeholder:text-neutral-500 focus:border-orange-500 focus:ring-orange-500/20 hover:border-[#505050] transition-all duration-200"
+    : "bg-white border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-orange-500 focus:ring-orange-500/20 hover:border-gray-400 transition-all duration-200";
+
+  const selectClass = isDark
+    ? "bg-[#1a1a1a] border-[#404040] text-neutral-100 focus:border-orange-500 focus:ring-orange-500/20 hover:border-[#505050] transition-all duration-200"
+    : "bg-white border-gray-300 text-gray-900 focus:border-orange-500 focus:ring-orange-500/20 hover:border-gray-400 transition-all duration-200";
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -86,12 +91,30 @@ export default function ProfileEditForm({
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validar tamanho do arquivo (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Arquivo muito grande. Tamanho máximo: 5MB");
+        e.target.value = "";
+        return;
+      }
+
+      // Validar tipo do arquivo
+      if (!file.type.startsWith('image/')) {
+        toast.error("Por favor, selecione apenas arquivos de imagem");
+        e.target.value = "";
+        return;
+      }
+
       setPhotoFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setPhotoPreview(reader.result as string);
       };
+      reader.onerror = () => {
+        toast.error("Erro ao processar a imagem selecionada");
+      };
       reader.readAsDataURL(file);
+      toast.success("Imagem selecionada com sucesso!");
     }
   };
 
@@ -102,14 +125,10 @@ export default function ProfileEditForm({
     setIsLoading(true);
 
     try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) {
-        throw new Error("Usuário não autenticado");
-      }
-
       // Upload da foto primeiro, se houver
       if (photoFile) {
-        await uploadProfilePhoto(token, photoFile);
+        await uploadProfilePhoto(photoFile);
+        toast.success("Foto de perfil enviada com sucesso!");
       }
 
       // Atualizar dados do perfil
@@ -126,20 +145,22 @@ export default function ProfileEditForm({
         personalContactEmail: formData.personalContactEmail,
       };
 
-      await updateCurrentUserPerson(token, payload);
+      await updateCurrentUserPerson(payload);
 
       setSuccess("Perfil atualizado com sucesso!");
+      toast.success("Perfil atualizado com sucesso!");
       
       setTimeout(() => {
         if (onSuccess) {
           onSuccess();
         } else {
-          router.push("/profile");
+          router.push("/user/profile");
         }
       }, 1500);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "Erro ao atualizar perfil";
       setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -164,24 +185,36 @@ export default function ProfileEditForm({
       {/* Photo Upload */}
       <Card className={cardClass}>
         <CardHeader>
-          <CardTitle>Foto de Perfil</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5 text-orange-500" />
+            Foto de Perfil
+          </CardTitle>
           <CardDescription className={isDark ? "text-neutral-400" : "text-gray-600"}>
-            Atualize sua foto de perfil
+            Escolha uma foto que represente você
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col items-center gap-4">
-            <Avatar
-              src={photoPreview || undefined}
-              alt={formData.name}
-              className="h-32 w-32 border-4 border-orange-500"
-            />
+          <div className="flex flex-col items-center gap-6">
+            <div className="relative">
+              <Avatar
+                src={photoPreview || undefined}
+                alt={formData.name}
+                className="h-32 w-32 border-4 border-orange-500 shadow-lg"
+              />
+              {photoFile && (
+                <div className="absolute -top-2 -right-2">
+                  <div className="bg-green-500 text-white rounded-full p-1">
+                    <CheckCircle2 className="h-4 w-4" />
+                  </div>
+                </div>
+              )}
+            </div>
             <Label
               htmlFor="photo"
-              className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-md transition-colors"
+              className="cursor-pointer inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg transition-all duration-200 shadow-md hover:shadow-lg font-medium"
             >
               <Upload className="h-4 w-4" />
-              Escolher Foto
+              {photoFile ? "Alterar Foto" : "Escolher Foto"}
             </Label>
             <input
               id="photo"
@@ -190,6 +223,11 @@ export default function ProfileEditForm({
               onChange={handlePhotoChange}
               className="hidden"
             />
+            {photoFile && (
+              <p className="text-sm text-green-500 font-medium">
+                Nova foto selecionada!
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -198,42 +236,57 @@ export default function ProfileEditForm({
       <Card className={cardClass}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
+            <User className="h-5 w-5 text-orange-500" />
             Informações Pessoais
           </CardTitle>
+          <CardDescription className={isDark ? "text-neutral-400" : "text-gray-600"}>
+            Dados básicos do seu perfil
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nome Completo *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => handleChange("name", e.target.value)}
-                className={inputClass}
-                required
-              />
-            </div>
+        <CardContent className="space-y-6">
+          {/* Nome Completo - Largura Total */}
+          <div className="space-y-3">
+            <Label htmlFor="name" className="text-sm font-semibold flex items-center gap-2 mb-2">
+              <User className="h-4 w-4 text-orange-500" />
+              Nome Completo *
+            </Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => handleChange("name", e.target.value)}
+              className={`${inputClass} h-12`}
+              placeholder="Digite seu nome completo"
+              required
+            />
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="birthdate">Data de Nascimento *</Label>
+          {/* Data de Nascimento e Gênero */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="space-y-3">
+              <Label htmlFor="birthdate" className="text-sm font-semibold flex items-center gap-2 mb-2">
+                <Calendar className="h-4 w-4 text-orange-500" />
+                Data de Nascimento *
+              </Label>
               <Input
                 id="birthdate"
                 type="date"
                 value={formData.birthdate}
                 onChange={(e) => handleChange("birthdate", e.target.value)}
-                className={inputClass}
+                className={`${inputClass} h-12`}
                 required
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="gender">Gênero *</Label>
+            <div className="space-y-1">
+              <Label htmlFor="gender" className="text-sm font-semibold flex items-center gap-2 mb-2">
+                <User className="h-4 w-4 text-orange-500" />
+                Gênero *
+              </Label>
               <select
                 id="gender"
                 value={formData.gender}
                 onChange={(e) => handleChange("gender", e.target.value)}
-                className={`w-full px-3 py-2 rounded-md border ${inputClass}`}
+                className={`${selectClass} h-12 rounded-xl px-4 py-3 cursor-pointer`}
                 required
               >
                 {Object.entries(genderTypeLabels).map(([key, label]) => (
@@ -243,23 +296,27 @@ export default function ProfileEditForm({
                 ))}
               </select>
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="maritalStatus">Estado Civil *</Label>
-              <select
-                id="maritalStatus"
-                value={formData.maritalStatus}
-                onChange={(e) => handleChange("maritalStatus", e.target.value)}
-                className={`w-full px-3 py-2 rounded-md border ${inputClass}`}
-                required
-              >
-                {Object.entries(maritalStatusTypeLabels).map(([key, label]) => (
-                  <option key={key} value={key}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </div>
+          {/* Estado Civil */}
+          <div className="space-y-3">
+            <Label htmlFor="maritalStatus" className="text-sm font-semibold flex items-center gap-2 mb-2">
+              <Heart className="h-4 w-4 text-orange-500" />
+              Estado Civil *
+            </Label>
+            <select
+              id="maritalStatus"
+              value={formData.maritalStatus}
+              onChange={(e) => handleChange("maritalStatus", e.target.value)}
+              className={`${selectClass} h-12 rounded-xl px-4 py-3 cursor-pointer`}
+              required
+            >
+              {Object.entries(maritalStatusTypeLabels).map(([key, label]) => (
+                <option key={key} value={key}>
+                  {label}
+                </option>
+              ))}
+            </select>
           </div>
         </CardContent>
       </Card>
@@ -268,43 +325,58 @@ export default function ProfileEditForm({
       <Card className={cardClass}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Mail className="h-5 w-5" />
+            <Mail className="h-5 w-5 text-orange-500" />
             Informações de Contato
           </CardTitle>
+          <CardDescription className={isDark ? "text-neutral-400" : "text-gray-600"}>
+            Como podemos entrar em contato com você
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email *</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.personalContactEmail}
-                onChange={(e) => handleChange("personalContactEmail", e.target.value)}
-                className={inputClass}
-                required
-              />
-            </div>
+        <CardContent className="space-y-6">
+          {/* Email - Largura Total */}
+          <div className="space-y-3">
+            <Label htmlFor="email" className="text-sm font-semibold flex items-center gap-2 mb-2">
+              <Mail className="h-4 w-4 text-orange-500" />
+              Email *
+            </Label>
+            <Input
+              id="email"
+              type="email"
+              value={formData.personalContactEmail}
+              onChange={(e) => handleChange("personalContactEmail", e.target.value)}
+              className={`${inputClass} h-12`}
+              placeholder="seu@email.com"
+              required
+            />
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="phone">Telefone</Label>
+          {/* Telefone e Documento */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-3">
+              <Label htmlFor="phone" className="text-sm font-semibold flex items-center gap-2 mb-2">
+                <Phone className="h-4 w-4 text-orange-500" />
+                Telefone
+              </Label>
               <Input
                 id="phone"
                 type="tel"
                 value={formData.phoneNumber}
                 onChange={(e) => handleChange("phoneNumber", e.target.value)}
-                className={inputClass}
+                className={`${inputClass} h-12`}
                 placeholder="(00) 00000-0000"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="document">Documento (CPF)</Label>
+            <div className="space-y-3">
+              <Label htmlFor="document" className="text-sm font-semibold flex items-center gap-2 mb-2">
+                <IdCard className="h-4 w-4 text-orange-500" />
+                Documento (CPF)
+              </Label>
               <Input
                 id="document"
                 value={formData.documentNumber}
                 onChange={(e) => handleChange("documentNumber", e.target.value)}
-                className={inputClass}
+                className={`${inputClass} h-12`}
                 placeholder="000.000.000-00"
               />
             </div>
@@ -316,41 +388,56 @@ export default function ProfileEditForm({
       <Card className={cardClass}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Church className="h-5 w-5" />
+            <Church className="h-5 w-5 text-orange-500" />
             Informações da Igreja
           </CardTitle>
+          <CardDescription className={isDark ? "text-neutral-400" : "text-gray-600"}>
+            Informações relacionadas à sua participação na comunidade
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="church">Igreja *</Label>
-              <Input
-                id="church"
-                value={formData.church}
-                onChange={(e) => handleChange("church", e.target.value)}
-                className={inputClass}
-                required
-              />
-            </div>
+        <CardContent className="space-y-6">
+          {/* Igreja - Largura Total */}
+          <div className="space-y-3">
+            <Label htmlFor="church" className="text-sm font-semibold flex items-center gap-2 mb-2">
+              <Church className="h-4 w-4 text-orange-500" />
+              Igreja *
+            </Label>
+            <Input
+              id="church"
+              value={formData.church}
+              onChange={(e) => handleChange("church", e.target.value)}
+              className={`${inputClass} h-12`}
+              placeholder="Nome da sua igreja"
+              required
+            />
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="clothingSize">Tamanho de Roupa</Label>
+          {/* Tamanho de Roupa e Voz Coral */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-3">
+              <Label htmlFor="clothingSize" className="text-sm font-semibold flex items-center gap-2 mb-2">
+                <Shirt className="h-4 w-4 text-orange-500" />
+                Tamanho de Roupa
+              </Label>
               <Input
                 id="clothingSize"
                 value={formData.clothingSize}
                 onChange={(e) => handleChange("clothingSize", e.target.value)}
-                className={inputClass}
-                placeholder="Ex: M, G, GG"
+                className={`${inputClass} h-12`}
+                placeholder="Ex: P, M, G, GG"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="choralVoice">Voz Coral</Label>
+            <div className="space-y-1">
+              <Label htmlFor="choralVoice" className="text-sm font-semibold flex items-center gap-2 mb-2">
+                <Music className="h-4 w-4 text-orange-500" />
+                Voz Coral
+              </Label>
               <select
                 id="choralVoice"
                 value={formData.choralVoiceType}
                 onChange={(e) => handleChange("choralVoiceType", e.target.value)}
-                className={`w-full px-3 py-2 rounded-md border ${inputClass}`}
+                className={`${selectClass} h-12 rounded-xl px-4 py-3 cursor-pointer`}
               >
                 {Object.entries(choralVoiceTypeLabels).map(([key, label]) => (
                   <option key={key} value={key}>
@@ -364,20 +451,20 @@ export default function ProfileEditForm({
       </Card>
 
       {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col sm:flex-row gap-4 pt-4">
         <Button
           type="submit"
           disabled={isLoading}
-          className="flex-1 bg-orange-500 hover:bg-orange-600 text-white"
+          className="flex-1 h-12 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
         >
           {isLoading ? (
             <div className="flex items-center justify-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Salvando...
+              <Loader2 className="h-5 w-5 animate-spin" />
+              Salvando alterações...
             </div>
           ) : (
             <>
-              <CheckCircle2 className="h-4 w-4 mr-2" />
+              <CheckCircle2 className="h-5 w-5 mr-2" />
               Salvar Alterações
             </>
           )}
@@ -388,10 +475,11 @@ export default function ProfileEditForm({
           variant="outline"
           onClick={onCancel || (() => router.push("/profile"))}
           disabled={isLoading}
-          className={isDark 
-            ? "flex-1 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border-neutral-600" 
-            : "flex-1 bg-white hover:bg-gray-50 text-gray-900 border-gray-300"
-          }
+          className={`flex-1 h-12 font-medium transition-all duration-200 ${
+            isDark 
+              ? "bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border-neutral-600 hover:border-neutral-500" 
+              : "bg-white hover:bg-gray-50 text-gray-900 border-gray-300 hover:border-gray-400"
+          }`}
         >
           Cancelar
         </Button>

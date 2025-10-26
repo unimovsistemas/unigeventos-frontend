@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // services/userRolesService.ts
-import axios from "axios";
-
-const API_URL = "http://localhost:8001/rest/v1/roles";
+import { authApi } from '@/lib/apiClient';
 
 export interface RolesInput {
   userId: string;
@@ -10,17 +8,11 @@ export interface RolesInput {
 }
 
 export async function addUserRoles(
-  token: string,
   userName: string,
   userRoles: RolesInput
 ) {
   try {
-    const response = await axios.post(`${API_URL}/add`, userRoles, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
+    const response = await authApi.post(`/roles/add`, userRoles);
 
     return response.data;
   } catch (error: any) {
@@ -32,17 +24,11 @@ export async function addUserRoles(
 }
 
 export async function removeUserRoles(
-  token: string,
   userName: string,
   userRoles: RolesInput
 ) {
   try {
-    const response = await axios.post(`${API_URL}/remove`, userRoles, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
+    const response = await authApi.post(`/roles/remove`, userRoles);
 
     return response.data;
   } catch (error: any) {

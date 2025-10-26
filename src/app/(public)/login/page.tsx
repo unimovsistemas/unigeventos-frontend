@@ -2,31 +2,143 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Input } from "@components/ui/input";
 import { Button } from "@components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@components/ui/card";
 import { login } from "../../../services/authService"; // Importando o serviço de autenticação
 import { Loader2 } from "lucide-react";
+import { CloudflareTurnstile } from "@/components/ui/cloudflare-turnstile";
+import { PasswordField } from "@/components/ui/password-field";
+import { useTurnstile } from "@/hooks/useTurnstile";
+import { PanelSelectionModal } from "@/components/ui/panel-selection-modal";
+import { toast } from "react-toastify";
+import { checkRegistrationExists } from "@/services/registrationService";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingRegistration, setIsCheckingRegistration] = useState(false);
+  const [showCaptcha, setShowCaptcha] = useState(false);
+  const [showPanelSelection, setShowPanelSelection] = useState(false);
+  const [userRoles, setUserRoles] = useState<string[]>([]);
+  
   const searchParams = useSearchParams();
+  const router = useRouter();
   const redirectUrl = searchParams.get('redirect');
+  const message = searchParams.get('message');
+  
+  // Detectar se está tentando se registrar em um evento
+  const isEventRegistration = redirectUrl?.includes('/user/events/') && redirectUrl?.includes('/register');
+  const eventId = isEventRegistration && redirectUrl ? redirectUrl.split('/')[3] : null;
+  
+  const { 
+    turnstileToken, 
+    turnstileError, 
+    handleTurnstileSuccess, 
+    handleTurnstileError, 
+    isTurnstileValid 
+  } = useTurnstile();
+
+  // Mostrar captcha apenas quando usuário e senha estiverem preenchidos
+  useEffect(() => {
+    setShowCaptcha(username.trim() !== "" && password.trim() !== "");
+  }, [username, password]);
+
+  // Handler para pressionar Enter
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      
+      // Só permite login se não estiver carregando e se o captcha estiver válido (quando visível)
+      const canLogin = !isLoading && (!showCaptcha || isTurnstileValid);
+      
+      if (canLogin) {
+        handleLogin();
+      }
+    }
+  };
+
+  const handleRedirectAfterLogin = async (roles: string[]) => {
+    const hasAdminRole = roles.includes('ROLE_ADMIN');
+    const hasUserRole = roles.includes('ROLE_USER') || roles.includes('ROLE_LEADER');
+
+    if (redirectUrl) {
+      // Verificar se é um redirecionamento para registro de evento
+      if (redirectUrl.includes('/user/events/') && redirectUrl.includes('/register')) {
+        try {
+          setIsCheckingRegistration(true);
+          
+          // Extrair o eventId da URL
+          const eventIdMatch = redirectUrl.match(/\/user\/events\/([^\/]+)\/register/);
+          if (eventIdMatch) {
+            const eventId = eventIdMatch[1];
+            
+            // Verificar se já existe uma inscrição
+            const registrationExists = await checkRegistrationExists(eventId);
+            
+            if (registrationExists.exists && registrationExists.id) {
+              // Se já existe inscrição, redirecionar para confirmação
+              router.push(`/user/events/${eventId}/registration-confirmation?registrationId=${registrationExists.id}`);
+              return;
+            }
+          }
+        } catch (error) {
+          console.error('Erro ao verificar inscrição durante login:', error);
+          // Em caso de erro, continuar com redirecionamento normal
+        } finally {
+          setIsCheckingRegistration(false);
+        }
+      }
+      
+      // Se há URL de redirecionamento e não é evento ou não tem inscrição, usar ela
+      router.push(redirectUrl);
+      return;
+    }
+
+    if (hasAdminRole && hasUserRole) {
+      // Usuário tem ambos os roles - mostrar modal de seleção
+      setUserRoles(roles);
+      setShowPanelSelection(true);
+    } else if (hasAdminRole) {
+      // Apenas admin - ir para painel admin
+      router.push("/admin");
+    } else if (hasUserRole) {
+      // Apenas user/leader - ir para painel user
+      router.push("/user");
+    } else {
+      // Sem roles válidos - erro
+      setError("Usuário não possui permissões adequadas para acessar o sistema.");
+    }
+  };
+
+  const handlePanelSelection = (panel: 'admin' | 'user') => {
+    setShowPanelSelection(false);
+    if (panel === 'admin') {
+      router.push("/admin");
+    } else {
+      router.push("/user");
+    }
+  };
 
   const handleLogin = async () => {
+    // Validação do captcha apenas se estiver visível
+    if (showCaptcha && !isTurnstileValid) {
+      toast.warning("Por favor, complete a verificação de segurança para continuar.");
+      return;
+    }
+
     setIsLoading(true);
     try {
       const response = await login(username, password);
-      localStorage.setItem("accessToken", response.accessToken);
-      localStorage.setItem("refreshToken", response.refreshToken);
       
-      // Redireciona para a URL especificada ou para o dashboard
-      const targetUrl = redirectUrl || "/dashboard";
-      window.location.href = targetUrl;
+      // Aguardar um pouco para garantir que os cookies sejam definidos
+      setTimeout(async () => {
+        // Redirecionar baseado nos roles
+        await handleRedirectAfterLogin(response.roles);
+      }, 100);
     } catch (err: any) {
       const hasCausedBy = err.response != null && err.response.data != null;
       const errorMessage = hasCausedBy
@@ -39,64 +151,147 @@ export default function LoginPage() {
   };
 
   return (
-      <Card className="w-full max-w-md shadow-lg rounded-2xl border border-gray-200 bg-white/80 backdrop-blur-lg p-6">
-        <CardHeader>
-          <CardTitle className="text-center text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">
-            Login
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {redirectUrl && (
-            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-center">
-              <p className="text-orange-700 text-sm">
-                Faça login para continuar com sua inscrição no evento
-              </p>
-            </div>
-          )}
-          {error && (
-            <p className="text-red-600 text-sm text-center mb-3">{error}</p>
-          )}
-          <Input
-            placeholder="Usuário"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-          <Input
-            type="password"
-            placeholder="Senha"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <Button
-            onClick={handleLogin}
-            size="lg"
-            className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-medium transition-all duration-300"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Entrando...
-              </>
-            ) : (
-              "Entrar"
+    <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
+      <div className="w-full max-w-md space-y-6">
+        {/* Header Section */}
+        <div className="text-center space-y-2">
+          <h1 className="text-3xl font-bold text-gray-900">
+            Bem-vindo de volta!
+          </h1>
+          <p className="text-gray-600">
+            Faça login para acessar sua conta
+          </p>
+        </div>
+
+        {/* Login Card */}
+        <Card className="w-full shadow-xl border-0 bg-white">
+          <CardContent className="p-8 space-y-6">
+            {redirectUrl && (
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-center">
+                <p className="text-orange-700 text-sm font-medium">
+                  {isEventRegistration 
+                    ? "🎯 Para se inscrever no evento, é necessário fazer login ou criar uma conta"
+                    : "Faça login para continuar"
+                  }
+                </p>
+                {isEventRegistration && (
+                  <p className="text-orange-600 text-xs mt-1">
+                    Após o login, você será redirecionado automaticamente para a página de inscrição
+                  </p>
+                )}
+              </div>
             )}
-          </Button>
-          <div className="flex justify-between mt-6 text-sm w-full">
-            <a
-              href="/forgot-password"
-              className="text-orange-500 hover:underline"
+            
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+                <p className="text-red-700 text-sm font-medium">{error}</p>
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
+                  Usuário
+                </label>
+                <Input
+                  id="username"
+                  placeholder="Digite seu usuário"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  onKeyDown={handleKeyPress}
+                  className="h-12"
+                />
+              </div>
+              
+              <PasswordField
+                label="Senha"
+                placeholder="Digite sua senha"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={handleKeyPress}
+                required
+              />
+            </div>
+
+            {/* Captcha de Segurança - Cloudflare Turnstile */}
+            {showCaptcha && (
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Verificação de Segurança
+                </label>
+                <CloudflareTurnstile
+                  siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "1x00000000000000000000AA"}
+                  onSuccess={handleTurnstileSuccess}
+                  onError={handleTurnstileError}
+                  theme="light"
+                  size="normal"
+                />
+                {turnstileError && (
+                  <p className="text-red-600 text-sm">
+                    Erro na verificação de segurança. Tente novamente.
+                  </p>
+                )}
+              </div>
+            )}
+
+            <Button
+              onClick={handleLogin}
+              size="lg"
+              className="w-full h-12 bg-orange-600 hover:bg-orange-700 text-white font-medium transition-all duration-300"
+              disabled={isLoading || isCheckingRegistration || (showCaptcha && !isTurnstileValid)}
             >
-              Esqueci a senha
-            </a>
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Entrando...
+                </>
+              ) : isCheckingRegistration ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Verificando inscrição...
+                </>
+              ) : (
+                "Entrar"
+              )}
+            </Button>
+
+            <div className="flex justify-between items-center text-sm">
+              <a
+                href="/forgot-password"
+                className="text-orange-600 hover:text-orange-700 hover:underline font-medium"
+              >
+                Esqueci minha senha
+              </a>
+              <a 
+                href={redirectUrl ? `/register?redirect=${encodeURIComponent(redirectUrl)}` : "/register"} 
+                className="text-orange-600 hover:text-orange-700 hover:underline font-medium"
+              >
+                Criar conta
+              </a>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Additional Info */}
+        <div className="text-center text-sm text-gray-500">
+          <p>
+            Ainda não tem uma conta?{" "}
             <a 
-              href={redirectUrl ? `/register?redirect=${encodeURIComponent(redirectUrl)}` : "/register"} 
-              className="text-orange-500 hover:underline"
+              href={redirectUrl ? `/register?redirect=${encodeURIComponent(redirectUrl)}` : "/register"}
+              className="text-orange-600 hover:text-orange-700 font-medium hover:underline"
             >
-              Criar conta
+              Cadastre-se gratuitamente
             </a>
-          </div>
-        </CardContent>
-      </Card>
+          </p>
+        </div>
+      </div>
+
+      {/* Modal de Seleção de Painel */}
+      <PanelSelectionModal
+        isOpen={showPanelSelection}
+        onClose={() => setShowPanelSelection(false)}
+        onSelectPanel={handlePanelSelection}
+      />
+    </div>
   );
 }

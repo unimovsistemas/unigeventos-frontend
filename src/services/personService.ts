@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import axios from "axios";
+import { authApi } from '@/lib/apiClient';
 
 export const genderTypeLabels: Record<string, string> = {
   MALE: "Masculino",
@@ -70,21 +70,13 @@ export interface PageResponse<T> {
   last: boolean;
 }
 
-const API_URL = "http://localhost:8001/rest/v1/persons";
-
 export const getPersonsPage = async (
-  accessToken: string,
   page: number = 0,
   size: number = 5
 ): Promise<PageResponse<PersonResponse>> => {
   try {
-    const response = await axios.get(
-      `${API_URL}/entities/page?page=${page}&size=${size}`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
+    const response = await authApi.get<PageResponse<PersonResponse>>(
+      `/persons/entities/page?page=${page}&size=${size}`
     );
 
     return response.data;

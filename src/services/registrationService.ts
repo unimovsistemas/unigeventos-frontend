@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import axios from "axios";
+import { authApi } from '@/lib/apiClient';
 import { Batch } from "./eventsService";
 import { Registration, RegistrationExistsResponse } from "../types/registration";
 
@@ -11,26 +11,26 @@ export type SubscriptionStatus =
   | "WAITLIST"
   | "REFUNDED";
 
-  export type TransportationType =
+export type TransportationType =
   | "PERSONAL"
   | "EVENT_TRANSPORT"
   | "NOT_APPLICABLE";
 
 export interface SubscriptionsByEventResponse {
-    id: string;
-    personId: string;
-    personName: string;
-    eventId: string;
-    registrationDate: Date;
-    status: SubscriptionStatus;
-    amountPaid: number;
-    totalDiscount: number;
-    transportationType: TransportationType;
-    ministries: string;
-    additionalInfo: string;
-    qrCodeBase64: string;
-    checkedIn: boolean;
-    batch: Batch;
+  id: string;
+  personId: string;
+  personName: string;
+  eventId: string;
+  registrationDate: Date;
+  status: SubscriptionStatus;
+  amountPaid: number;
+  totalDiscount: number;
+  transportationType: TransportationType;
+  ministries: string;
+  additionalInfo: string;
+  qrCodeBase64: string;
+  checkedIn: boolean;
+  batch: Batch;
 }
 
 export interface SubscriptionsByEventPageResponse {
@@ -40,18 +40,11 @@ export interface SubscriptionsByEventPageResponse {
   totalElements: number;
 }
 
-const API_URL = "http://localhost:8001/rest/v1/registrations";
-
 export const checkin = async (
-  accessToken: string,
   registrationId: string
 ): Promise<void> => {
   try {
-    await axios.post(`${API_URL}/actions/checkin/${registrationId}`, null, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    await authApi.post(`/registrations/actions/checkin/${registrationId}`, null);
   } catch (error: any) {
     throw new Error(
       error.response?.data?.message || "Erro ao realizar checkin"
@@ -60,15 +53,10 @@ export const checkin = async (
 };
 
 export const cancelRegistration = async (
-  accessToken: string,
   registrationId: string
 ): Promise<void> => {
   try {
-    await axios.post(`${API_URL}/actions/cancel/${registrationId}`, null, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    await authApi.post(`/registrations/actions/cancel/${registrationId}`, null);
   } catch (error: any) {
     throw new Error(
       error.response?.data?.message || "Erro ao realizar o cancelamento da inscrição"
@@ -77,15 +65,10 @@ export const cancelRegistration = async (
 };
 
 export const repay = async (
-  accessToken: string,
   registrationId: string
 ): Promise<void> => {
   try {
-    await axios.post(`${API_URL}/actions/repay/${registrationId}`, null, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    await authApi.post(`/registrations/actions/repay/${registrationId}`, null);
   } catch (error: any) {
     throw new Error(
       error.response?.data?.message || "Erro ao realizar o reembolso da inscrição"
@@ -94,15 +77,10 @@ export const repay = async (
 };
 
 export const putOnWaitingList = async (
-  accessToken: string,
   registrationId: string
 ): Promise<void> => {
   try {
-    await axios.post(`${API_URL}/actions/put-waiting-list/${registrationId}`, null, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    await authApi.post(`/registrations/actions/put-waiting-list/${registrationId}`, null);
   } catch (error: any) {
     throw new Error(
       error.response?.data?.message || "Erro ao colocar a inscrição na lista de espera"
@@ -111,19 +89,19 @@ export const putOnWaitingList = async (
 };
 
 export const changeBatch = async (
-  accessToken: string,
   registrationId: string,
   newBatchId: string,
 ): Promise<void> => {
   try {
-    await axios.post(`${API_URL}/actions/change-batch/${registrationId}`, null, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-      params: {
-        batchId: newBatchId
+    await authApi.post(
+      `/registrations/actions/change-batch/${registrationId}`,
+      null,
+      {
+        params: {
+          batchId: newBatchId
+        }
       }
-    });
+    );
   } catch (error: any) {
     throw new Error(
       error.response?.data?.message || "Erro ao alterar o lote da inscrição"
@@ -132,15 +110,10 @@ export const changeBatch = async (
 };
 
 export const attachTerm = async (
-  accessToken: string,
   registrationId: string
 ): Promise<void> => {
   try {
-    await axios.post(`${API_URL}/actions/attach-term/${registrationId}`, null, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    await authApi.post(`/registrations/actions/attach-term/${registrationId}`, null);
   } catch (error: any) {
     throw new Error(
       error.response?.data?.message || "Erro ao alterar o lote da inscrição"
@@ -149,21 +122,20 @@ export const attachTerm = async (
 };
 
 export const getSubscriptionsByEvent = async (
-  accessToken: string,
   id: string,
   searchTerm = "",
   page: number = 0,
   size: number = 10
 ): Promise<SubscriptionsByEventPageResponse> => {
   try {
-    const response = await axios.get(`${API_URL}/queries/subscriptions-by-event?page=${page}&size=${size}&searchTerms=${encodeURIComponent(searchTerm)}`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-      params: {
-        "eventId": id
+    const response = await authApi.get<SubscriptionsByEventPageResponse>(
+      `/registrations/queries/subscriptions-by-event?page=${page}&size=${size}&searchTerms=${encodeURIComponent(searchTerm)}`,
+      {
+        params: {
+          "eventId": id
+        }
       }
-    });
+    );
 
     return response.data;
   } catch (error: any) {
@@ -199,17 +171,9 @@ export const registerForEvent = async (
   registrationData: RegistrationData
 ): Promise<RegistrationResponse> => {
   try {
-    const token = localStorage.getItem('accessToken');
-    
-    const response = await axios.post(
-      `${API_URL}/actions/register`,
-      registrationData,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-      }
+    const response = await authApi.post<RegistrationResponse>(
+      `/registrations/actions/register`,
+      registrationData
     );
 
     return response.data;
@@ -237,15 +201,8 @@ export const getRegistrationById = async (
   registrationId: string
 ): Promise<Registration> => {
   try {
-    const token = localStorage.getItem('accessToken');
-    
-    const response = await axios.get(
-      `${API_URL}/entities/${registrationId}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-      }
+    const response = await authApi.get<Registration>(
+      `/registrations/entities/${registrationId}`
     );
 
     return response.data;
@@ -263,15 +220,8 @@ export const checkRegistrationExists = async (
   eventId: string
 ): Promise<RegistrationExistsResponse> => {
   try {
-    const token = localStorage.getItem('accessToken');
-    
-    const response = await axios.get(
-      `${API_URL}/queries/get-from-current-user-by-event/${eventId}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      }
+    const response = await authApi.get(
+      `/registrations/queries/get-from-current-user-by-event/${eventId}`
     );
 
     return {
